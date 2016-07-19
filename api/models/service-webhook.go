@@ -9,8 +9,6 @@ import (
 )
 
 var (
-	// These variables are also prensent in provider/aws/notify.go
-	// This duplication has to be addressed.
 	NotificationTopic = os.Getenv("NOTIFICATION_TOPIC")
 	NotificationHost  = os.Getenv("NOTIFICATION_HOST")
 )

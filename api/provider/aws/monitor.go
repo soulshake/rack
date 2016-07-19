@@ -94,12 +94,16 @@ func (p *AWSProvider) MonitorCluster() {
 				// log for humans
 				fmt.Printf("who=\"convox/monitor\" what=\"%s\" why=\"%s\"\n", what, why)
 
-				p.NotifySuccess("instance:unhealthy", map[string]string{
-					"message":  what,
-					"reason":   why,
-					"instance": i.Id,
-				})
-
+				p.EventSend(&structs.Event{
+					Action: "instance:unhealthy",
+					Status: "success",
+					Data: map[string]string{
+						"message":  what,
+						"reason":   why,
+						"instance": i.Id,
+					},
+					Timestamp: time.Now(),
+				}, nil)
 			}
 		}
 
@@ -139,6 +143,7 @@ func checkEvents(p *AWSProvider, since time.Time) time.Time {
 	}
 
 	for _, s := range services {
+
 		var app string
 		apps, err := p.AppList()
 		if err != nil {
@@ -148,6 +153,8 @@ func checkEvents(p *AWSProvider, since time.Time) time.Time {
 
 		for _, a := range apps {
 			if strings.HasPrefix(*s.ServiceName, fmt.Sprintf("%s-%s", os.Getenv("RACK"), a.Name)) {
+				r, _ := p.ResourcesList(a.Name)
+				fmt.Printf("__________________________ resources %#v \n", r)
 				app = a.Name
 			}
 		}
@@ -166,16 +173,18 @@ func checkEvents(p *AWSProvider, since time.Time) time.Time {
 
 		for _, e := range s.Events {
 			if e.CreatedAt.After(since) {
-				fmt.Printf("===================== SERVICE %s EVENT: %s \n", *s.ServiceName, e)
 
 				if strings.HasSuffix(*e.Message, "has reached a steady state.") {
-					fmt.Println("INSIDE IF READY STATE")
-
-					p.NotifySuccess("process:ready", map[string]string{
-						"message": fmt.Sprintf("Process %s for app %s is ready.\n", process, app),
-						"process": process,
-						"app":     app,
-					})
+					p.EventSend(&structs.Event{
+						Action: "process:ready",
+						Status: "success",
+						Data: map[string]string{
+							"message": fmt.Sprintf("Process %s for app %s is ready.\n", process, app),
+							"process": process,
+							"app":     app,
+						},
+						Timestamp: time.Now(),
+					}, nil)
 				}
 
 			}
