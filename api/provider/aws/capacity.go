@@ -117,3 +117,40 @@ func (p *AWSProvider) clusterServices() (ECSServices, error) {
 
 	return services, nil
 }
+
+func (p *AWSProvider) appServices(app string) (ECSServices, error) {
+	services := ECSServices{}
+
+	resources, err := p.ResourcesList(app)
+	if err != nil {
+		return nil, err
+	}
+
+	arns := []*string{}
+
+	i := 0
+	for _, r := range resources {
+		i = i + 1
+
+		if r.Type == "Custom::ECSService" {
+			arns = append(arns, aws.String(r.Id))
+		}
+
+		//have to make requests in batches of ten
+		if len(arns) == 10 || (i == len(resources) && len(arns) > 0) {
+			dres, err := p.ecs().DescribeServices(&ecs.DescribeServicesInput{
+				Cluster:  aws.String(os.Getenv("CLUSTER")),
+				Services: arns,
+			})
+
+			if err != nil {
+				return nil, err
+			}
+
+			services = append(services, dres.Services...)
+			arns = []*string{}
+		}
+	}
+
+	return services, nil
+}

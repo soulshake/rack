@@ -35,7 +35,7 @@ func (p *AWSProvider) MonitorEvents() {
 
 	since := time.Now()
 
-	for _ = range time.Tick(15 * time.Second) {
+	for _ = range time.Tick(1 * time.Minute) {
 		since = checkEvents(p, since)
 	}
 }
@@ -136,63 +136,59 @@ func (p *AWSProvider) heartbeat(log *logger.Logger) {
 
 func checkEvents(p *AWSProvider, since time.Time) time.Time {
 
+	appMap := make(map[string]ECSServices)
+
+	apps, err := p.AppList()
+	if err != nil {
+		fmt.Printf("fn=checkEvents erra=\"unable to get app list: %s\"\n", err)
+		apps = structs.Apps{}
+	}
+
+	for _, a := range apps {
+
+		as, err := p.appServices(a.Name)
+		if err != nil {
+			fmt.Printf("fn=checkEvents erra=\"unable to get service list for %s: %s\"\n", a.Name, err)
+			continue
+		}
+
+		appMap[a.Name] = as
+	}
+
+	for app, services := range appMap {
+		for _, service := range services {
+
+			parts := strings.SplitAfter(*service.ServiceName, fmt.Sprintf("%s-%s-", os.Getenv("RACK"), app))
+			process := strings.Split(parts[1], "-")[0]
+
+			for _, event := range service.Events {
+				if event.CreatedAt.After(since) {
+
+					if strings.HasSuffix(*event.Message, "has reached a steady state.") {
+						p.EventSend(&structs.Event{
+							Action: "app:process",
+							Status: "success",
+							Data: map[string]string{
+								"message": fmt.Sprintf("%s process for app %s is ready.", process, app),
+								"process": process,
+								"app":     app,
+							},
+							Timestamp: time.Now(),
+						}, nil)
+					}
+
+				}
+			}
+		}
+	}
+
 	services, err := p.clusterServices()
 	if err != nil {
 		fmt.Printf("fn=checkEvents erra=\"unable to get services: %s\"\n", err)
 		return time.Now()
 	}
 
-	for _, s := range services {
-
-		var app string
-		apps, err := p.AppList()
-		if err != nil {
-			fmt.Printf("fn=checkEvents erra=\"unable to get app list: %s\"\n", err)
-			apps = structs.Apps{}
-		}
-
-		for _, a := range apps {
-			if strings.HasPrefix(*s.ServiceName, fmt.Sprintf("%s-%s", os.Getenv("RACK"), a.Name)) {
-				r, _ := p.ResourcesList(a.Name)
-				fmt.Printf("__________________________ resources %#v \n", r)
-				app = a.Name
-			}
-		}
-
-		// This logic can be improved once provider has a way to list process for an app.
-		var process string
-		if app != "" {
-			ps := strings.SplitAfter(*s.ServiceName, fmt.Sprintf("%s-", app))
-			if len(ps) == 2 {
-				p := strings.Split(ps[1], "-")
-				if len(p) == 2 {
-					process = p[0]
-				}
-			}
-		}
-
-		for _, e := range s.Events {
-			if e.CreatedAt.After(since) {
-
-				if strings.HasSuffix(*e.Message, "has reached a steady state.") {
-					p.EventSend(&structs.Event{
-						Action: "process:ready",
-						Status: "success",
-						Data: map[string]string{
-							"message": fmt.Sprintf("Process %s for app %s is ready.\n", process, app),
-							"process": process,
-							"app":     app,
-						},
-						Timestamp: time.Now(),
-					}, nil)
-				}
-
-			}
-		}
-	}
-
 	t := *services.LastEvent().CreatedAt
-	fmt.Println("==================== TIME: ", t)
 	return t
 }
 
