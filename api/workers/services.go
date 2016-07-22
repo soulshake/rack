@@ -1,11 +1,15 @@
 package workers
 
 import (
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/convox/rack/api/models"
+	"github.com/convox/rack/api/provider"
+	"github.com/convox/rack/api/structs"
 	"github.com/ddollar/logger"
 )
 
@@ -60,16 +64,26 @@ func monitorConverged(lastConverged bool, lastEventAt time.Time) (bool, ecs.Serv
 	log.Log("fn=monitorConverged converged=%t events=%d lastEventAt=%q", converged, len(events), lastEventAt)
 
 	if events.HasCapacityWarning() {
-		//models.NotifyError("rack:capacity", fmt.Errorf(events.CapacityWarning()), map[string]string{
-		//	"rack": os.Getenv("RACK"),
-		//})
+		provider.EventSend(&structs.Event{
+			Action: "rack:capacity",
+			Status: "error",
+			Data: map[string]string{
+				"rack": os.Getenv("RACK"),
+			},
+			Timestamp: time.Now(),
+		}, fmt.Errorf(events.CapacityWarning()))
 	}
 
 	if converged != lastConverged {
-		//models.NotifySuccess("rack:converge", map[string]string{
-		//	"rack":      os.Getenv("RACK"),
-		//	"converged": fmt.Sprintf("%t", converged),
-		//})
+		provider.EventSend(&structs.Event{
+			Action: "rack:converge",
+			Status: "success",
+			Data: map[string]string{
+				"rack":      os.Getenv("RACK"),
+				"converged": fmt.Sprintf("%t", converged),
+			},
+			Timestamp: time.Now(),
+		}, nil)
 	}
 
 	return converged, services.LastEvent()
