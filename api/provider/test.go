@@ -179,11 +179,6 @@ func (p *TestProviderRunner) ReleaseSave(r *structs.Release, logdir, key string)
 	return nil
 }
 
-func (p *TestProviderRunner) ResourcesList(app string) (structs.Resources, error) {
-	p.Called(app)
-	return structs.Resources{}, nil
-}
-
 func (p *TestProviderRunner) ServiceCreate(name, kind string, params map[string]string) (*structs.Service, error) {
 	p.Called(name, kind, params)
 	return &p.Service, nil

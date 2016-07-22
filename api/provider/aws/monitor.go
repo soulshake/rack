@@ -206,7 +206,7 @@ type ec2Instance struct {
 type ec2Instances map[string]ec2Instance
 
 func describeASG(instances ec2Instances, p *AWSProvider) error {
-	resources, err := p.ResourcesList(os.Getenv("RACK"))
+	resources, err := p.resourcesList(os.Getenv("RACK"))
 	if err != nil {
 		return err
 	}

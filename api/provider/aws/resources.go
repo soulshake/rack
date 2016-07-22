@@ -7,11 +7,23 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/convox/rack/api/cache"
 	"github.com/convox/rack/api/helpers"
-	"github.com/convox/rack/api/structs"
 )
 
-func (p *AWSProvider) ResourcesList(app string) (structs.Resources, error) {
-	if resources, ok := cache.Get("ListResources", app).(structs.Resources); ok {
+type Resource struct {
+	Id   string
+	Name string
+
+	Reason string
+	Status string
+	Type   string
+
+	Time time.Time
+}
+
+type Resources map[string]Resource
+
+func (p *AWSProvider) resourcesList(app string) (Resources, error) {
+	if resources, ok := cache.Get("ListResources", app).(Resources); ok {
 		return resources, nil
 	}
 
@@ -31,10 +43,10 @@ func (p *AWSProvider) ResourcesList(app string) (structs.Resources, error) {
 		return nil, err
 	}
 
-	resources := make(structs.Resources, len(res.StackResources))
+	resources := make(Resources, len(res.StackResources))
 
 	for _, r := range res.StackResources {
-		resources[*r.LogicalResourceId] = structs.Resource{
+		resources[*r.LogicalResourceId] = Resource{
 			Id:     helpers.CoalesceS(r.PhysicalResourceId, ""),
 			Name:   helpers.CoalesceS(r.LogicalResourceId, ""),
 			Reason: helpers.CoalesceS(r.ResourceStatusReason, ""),

@@ -54,8 +54,6 @@ type Provider interface {
 	ReleasePromote(app, id string) (*structs.Release, error)
 	ReleaseSave(*structs.Release, string, string) error
 
-	ResourcesList(app string) (structs.Resources, error)
-
 	ServiceCreate(name, kind string, params map[string]string) (*structs.Service, error)
 	ServiceDelete(name string) (*structs.Service, error)
 	ServiceGet(name string) (*structs.Service, error)
@@ -210,10 +208,6 @@ func ReleasePromote(app, id string) (*structs.Release, error) {
 
 func ReleaseSave(r *structs.Release, logdir, key string) error {
 	return CurrentProvider.ReleaseSave(r, logdir, key)
-}
-
-func ResourcesList(app string) (structs.Resources, error) {
-	return CurrentProvider.ResourcesList(app)
 }
 
 func ServiceCreate(name, kind string, params map[string]string) (*structs.Service, error) {

@@ -121,7 +121,7 @@ func (p *AWSProvider) clusterServices() (ECSServices, error) {
 func (p *AWSProvider) appServices(app string) (ECSServices, error) {
 	services := ECSServices{}
 
-	resources, err := p.ResourcesList(app)
+	resources, err := p.resourcesList(app)
 	if err != nil {
 		return nil, err
 	}
