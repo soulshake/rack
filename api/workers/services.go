@@ -66,7 +66,6 @@ func monitorConverged(lastConverged bool, lastEventAt time.Time) (bool, ecs.Serv
 	if events.HasCapacityWarning() {
 		provider.EventSend(&structs.Event{
 			Action: "rack:capacity",
-			Status: "error",
 			Data: map[string]string{
 				"rack": os.Getenv("RACK"),
 			},
@@ -77,12 +76,10 @@ func monitorConverged(lastConverged bool, lastEventAt time.Time) (bool, ecs.Serv
 	if converged != lastConverged {
 		provider.EventSend(&structs.Event{
 			Action: "rack:converge",
-			Status: "success",
 			Data: map[string]string{
 				"rack":      os.Getenv("RACK"),
 				"converged": fmt.Sprintf("%t", converged),
 			},
-			Timestamp: time.Now(),
 		}, nil)
 	}
 

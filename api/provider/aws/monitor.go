@@ -3,7 +3,9 @@ package aws
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -134,6 +136,8 @@ func (p *AWSProvider) heartbeat(log *logger.Logger) {
 	})
 }
 
+var stopR = regexp.MustCompile("has stopped ([0-9]+)")
+
 func checkEvents(p *AWSProvider, since time.Time) time.Time {
 
 	appMap := make(map[string]ECSServices)
@@ -167,14 +171,55 @@ func checkEvents(p *AWSProvider, since time.Time) time.Time {
 					if strings.HasSuffix(*event.Message, "has reached a steady state.") {
 						p.EventSend(&structs.Event{
 							Action: "app:process",
-							Status: "success",
 							Data: map[string]string{
 								"message": fmt.Sprintf("%s process for app %s is ready.", process, app),
 								"process": process,
 								"app":     app,
+								"state":   "ready",
 							},
-							Timestamp: time.Now(),
 						}, nil)
+
+					} else if strings.Contains(*event.Message, "has started") {
+						p.EventSend(&structs.Event{
+							Action: "app:process",
+							Data: map[string]string{
+								"message": fmt.Sprintf("%s process for app %s is coming up.", process, app),
+								"process": process,
+								"app":     app,
+								"state":   "started",
+							},
+						}, nil)
+
+					} else if strings.Contains(*event.Message, "has stopped") {
+
+						e := fmt.Errorf("%s process for app %s stopped.", process, app)
+
+						es := stopR.FindStringSubmatch(*event.Message)
+						if es != nil {
+							if count, err := strconv.Atoi(es[1]); err == nil && count > 1 {
+								e = fmt.Errorf("%d %s processes for app %s stopped.", count, process, app)
+							}
+						}
+
+						p.EventSend(&structs.Event{
+							Action: "app:process",
+							Data: map[string]string{
+								"process": process,
+								"app":     app,
+								"state":   "stopped",
+							},
+						}, e)
+
+					} else if strings.Contains(*event.Message, "was unable to place a task because no container instance met all of its requirements") {
+
+						p.EventSend(&structs.Event{
+							Action: "app:process",
+							Data: map[string]string{
+								"process": process,
+								"app":     app,
+								"state":   "pending",
+							},
+						}, fmt.Errorf("%s process for app %s requires more resources.", process, app))
 					}
 
 				}
