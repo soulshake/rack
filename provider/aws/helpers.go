@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -247,35 +248,63 @@ func (p *AWSProvider) s3Put(bucket, key string, data []byte, public bool) error 
 	return err
 }
 
-func (p *AWSProvider) stackUpdate(name string, templateUrl string, changes map[string]string) error {
-	req := &cloudformation.UpdateStackInput{
-		Capabilities: []*string{aws.String("CAPABILITY_IAM")},
-		StackName:    aws.String(name),
-		TemplateURL:  aws.String(templateUrl),
+func (p *AWSProvider) stackUpdate(stackName string, templateURL string, changes map[string]string) error {
+	app, err := p.AppGet(stackName)
+	if err != nil {
+		return err
 	}
+	currentParams := app.Parameters
 
-	params, err := formationParameters(templateUrl)
+	stackInput, err := GenerateStackInput(stackName, templateURL, currentParams, changes)
 	if err != nil {
 		return err
 	}
 
-	for key := range params {
-		if _, present := changes[key]; present {
-			req.Parameters = append(req.Parameters, &cloudformation.Parameter{
+	_, err = p.updateStack(stackInput)
+
+	return err
+}
+
+func GenerateStackInput(stackName, templateURL string, currentParams, changes map[string]string) (*cloudformation.UpdateStackInput, error) {
+	templateParams, err := formationParameters(templateURL)
+	if err != nil {
+		return nil, err
+	}
+
+	// sort parameters by key name for deterministic ordering in tests
+	var keys []string
+	for key := range templateParams {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	stackInputParameters := make([]*cloudformation.Parameter, 0)
+
+	for _, key := range keys {
+		if changedValue, ok := changes[key]; ok {
+			stackInputParameters = append(stackInputParameters, &cloudformation.Parameter{
 				ParameterKey:   aws.String(key),
-				ParameterValue: aws.String(changes[key]),
+				ParameterValue: aws.String(changedValue),
 			})
-		} else {
-			req.Parameters = append(req.Parameters, &cloudformation.Parameter{
+		} else if _, ok := currentParams[key]; ok {
+			stackInputParameters = append(stackInputParameters, &cloudformation.Parameter{
 				ParameterKey:     aws.String(key),
 				UsePreviousValue: aws.Bool(true),
 			})
+		} else {
+			// If the new formation template introduces a parameter not in the current stack,
+			// don't add a parameter to the UpdateStackInput; rely on template defaults instead.
 		}
 	}
 
-	_, err = p.updateStack(req)
+	stackInput := &cloudformation.UpdateStackInput{
+		Capabilities: []*string{aws.String("CAPABILITY_IAM")},
+		Parameters:   stackInputParameters,
+		StackName:    aws.String(stackName),
+		TemplateURL:  aws.String(templateURL),
+	}
 
-	return err
+	return stackInput, err
 }
 
 func templateHelpers() template.FuncMap {

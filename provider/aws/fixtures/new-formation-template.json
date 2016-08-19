@@ -1,0 +1,34 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Conditions": {},
+  "Mappings": {},
+  "Outputs": {},
+  "Parameters": {
+    "ChangingA": {
+      "Description": "Test Parameter",
+      "Type": "String",
+      "Default": ""
+    },
+    "ChangingB": {
+      "Description": "Test Parameter",
+      "Type": "String",
+      "Default": ""
+    },
+    "NotChanging": {
+      "Description": "Test Parameter",
+      "Type": "String",
+      "Default": ""
+    },
+    "NotChangingNoEcho": {
+      "Description": "Test Parameter",
+      "Type": "String",
+      "NoEcho": true
+    },
+    "NotInCurrentStack": {
+      "Description": "Test Parameter",
+      "Type": "String",
+      "Default": ""
+    }
+  },
+  "Resources": {}
+}
