@@ -171,6 +171,11 @@
 			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
 		},
 		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/acm/acmiface",
+			"Comment": "v1.4.6",
+			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
+		},
+		{
 			"ImportPath": "github.com/aws/aws-sdk-go/service/autoscaling",
 			"Comment": "v1.4.6",
 			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
@@ -181,12 +186,27 @@
 			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
 		},
 		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/cloudformation/cloudformationiface",
+			"Comment": "v1.4.6",
+			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
+		},
+		{
 			"ImportPath": "github.com/aws/aws-sdk-go/service/cloudwatch",
 			"Comment": "v1.4.6",
 			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
 		},
 		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface",
+			"Comment": "v1.4.6",
+			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
+		},
+		{
 			"ImportPath": "github.com/aws/aws-sdk-go/service/cloudwatchlogs",
+			"Comment": "v1.4.6",
+			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface",
 			"Comment": "v1.4.6",
 			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
 		},
@@ -197,6 +217,11 @@
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute",
+			"Comment": "v1.4.6",
+			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface",
 			"Comment": "v1.4.6",
 			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
 		},
@@ -216,7 +241,17 @@
 			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
 		},
 		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/ecr/ecriface",
+			"Comment": "v1.4.6",
+			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
+		},
+		{
 			"ImportPath": "github.com/aws/aws-sdk-go/service/ecs",
+			"Comment": "v1.4.6",
+			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/ecs/ecsiface",
 			"Comment": "v1.4.6",
 			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
 		},
@@ -227,6 +262,11 @@
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/service/iam",
+			"Comment": "v1.4.6",
+			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/iam/iamiface",
 			"Comment": "v1.4.6",
 			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
 		},
@@ -256,7 +296,17 @@
 			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
 		},
 		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/s3/s3iface",
+			"Comment": "v1.4.6",
+			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
+		},
+		{
 			"ImportPath": "github.com/aws/aws-sdk-go/service/sns",
+			"Comment": "v1.4.6",
+			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/sns/snsiface",
 			"Comment": "v1.4.6",
 			"Rev": "6ac30507cca29249f4d49af45a8efc98b84088ee"
 		},

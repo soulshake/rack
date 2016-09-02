@@ -7,16 +7,27 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
+	"github.com/aws/aws-sdk-go/service/acm/acmiface"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/aws/aws-sdk-go/service/cloudformation/cloudformationiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/aws/aws-sdk-go/service/ecr/ecriface"
 	"github.com/aws/aws-sdk-go/service/ecs"
+	"github.com/aws/aws-sdk-go/service/ecs/ecsiface"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go/service/iam/iamiface"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sns"
+	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	"github.com/convox/logger"
 )
 
@@ -103,39 +114,39 @@ func (p *AWSProvider) config() *aws.Config {
 	return config
 }
 
-func (p *AWSProvider) acm() *acm.ACM {
+func (p *AWSProvider) acm() acmiface.ACMAPI {
 	return acm.New(session.New(), p.config())
 }
 
-func (p *AWSProvider) cloudformation() *cloudformation.CloudFormation {
+func (p *AWSProvider) cloudformation() cloudformationiface.CloudFormationAPI {
 	return cloudformation.New(session.New(), p.config())
 }
 
-func (p *AWSProvider) cloudwatch() *cloudwatch.CloudWatch {
+func (p *AWSProvider) cloudwatch() cloudwatchiface.CloudWatchAPI {
 	return cloudwatch.New(session.New(), p.config())
 }
 
-func (p *AWSProvider) cloudwatchlogs() *cloudwatchlogs.CloudWatchLogs {
+func (p *AWSProvider) cloudwatchlogs() cloudwatchlogsiface.CloudWatchLogsAPI {
 	return cloudwatchlogs.New(session.New(), p.config())
 }
 
-func (p *AWSProvider) dynamodb() *dynamodb.DynamoDB {
+func (p *AWSProvider) dynamodb() dynamodbiface.DynamoDBAPI {
 	return dynamodb.New(session.New(), p.config())
 }
 
-func (p *AWSProvider) ec2() *ec2.EC2 {
+func (p *AWSProvider) ec2() ec2iface.EC2API {
 	return ec2.New(session.New(), p.config())
 }
 
-func (p *AWSProvider) ecr() *ecr.ECR {
+func (p *AWSProvider) ecr() ecriface.ECRAPI {
 	return ecr.New(session.New(), p.config())
 }
 
-func (p *AWSProvider) ecs() *ecs.ECS {
+func (p *AWSProvider) ecs() ecsiface.ECSAPI {
 	return ecs.New(session.New(), p.config())
 }
 
-func (p *AWSProvider) iam() *iam.IAM {
+func (p *AWSProvider) iam() iamiface.IAMAPI {
 	return iam.New(session.New(), p.config())
 }
 
@@ -143,11 +154,11 @@ func (p *AWSProvider) iam() *iam.IAM {
 // (http://s3.amazonaws.com/johnsmith.net/homepage.html) vs virtual
 // hosted style (http://johnsmith.net.s3.amazonaws.com/homepage.html)
 // since path style is easier to test.
-func (p *AWSProvider) s3() *s3.S3 {
+func (p *AWSProvider) s3() s3iface.S3API {
 	return s3.New(session.New(), p.config().WithS3ForcePathStyle(true))
 }
 
-func (p *AWSProvider) sns() *sns.SNS {
+func (p *AWSProvider) sns() snsiface.SNSAPI {
 	return sns.New(session.New(), p.config())
 }
 
