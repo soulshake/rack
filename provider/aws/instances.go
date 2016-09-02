@@ -21,7 +21,7 @@ func (p *AWSProvider) InstanceList() (structs.Instances, error) {
 		instanceIds = append(instanceIds, i.Ec2InstanceId)
 	}
 
-	ec2Res, err := p.ec2().DescribeInstances(&ec2.DescribeInstancesInput{
+	ec2Res, err := p.EC2.DescribeInstances(&ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
 			&ec2.Filter{Name: aws.String("instance-id"), Values: instanceIds},
 		},
@@ -143,7 +143,7 @@ func (p *AWSProvider) describeContainerInstances() (*ecs.DescribeContainerInstan
 			return nil, err
 		}
 
-		dres, err := p.ecs().DescribeContainerInstances(&ecs.DescribeContainerInstancesInput{
+		dres, err := p.ECS.DescribeContainerInstances(&ecs.DescribeContainerInstancesInput{
 			Cluster:            aws.String(p.Cluster),
 			ContainerInstances: res.ContainerInstanceArns,
 		})

@@ -67,6 +67,7 @@ type AWSProvider struct {
 
 	// AWS services
 	EC2 ec2iface.EC2API
+	ECS ecsiface.ECSAPI
 }
 
 // NewProviderFromEnv returns a new AWS provider from env vars
@@ -96,6 +97,7 @@ func NewProviderFromEnv() *AWSProvider {
 
 	s := session.New()
 	p.EC2 = ec2.New(s, p.config())
+	p.ECS = ecs.New(s, p.config())
 
 	return p
 }

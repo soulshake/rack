@@ -406,7 +406,7 @@ func (p *AWSProvider) listContainerInstances(input *ecs.ListContainerInstancesIn
 		return res, nil
 	}
 
-	res, err := p.ecs().ListContainerInstances(input)
+	res, err := p.ECS.ListContainerInstances(input)
 
 	if err != nil {
 		return nil, err
