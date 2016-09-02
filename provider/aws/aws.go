@@ -64,11 +64,14 @@ type AWSProvider struct {
 	VpcCidr           string
 
 	SkipCache bool
+
+	// AWS services
+	EC2 ec2iface.EC2API
 }
 
 // NewProviderFromEnv returns a new AWS provider from env vars
 func NewProviderFromEnv() *AWSProvider {
-	return &AWSProvider{
+	p := &AWSProvider{
 		Region:            os.Getenv("AWS_REGION"),
 		Endpoint:          os.Getenv("AWS_ENDPOINT"),
 		Access:            os.Getenv("AWS_ACCESS"),
@@ -90,6 +93,11 @@ func NewProviderFromEnv() *AWSProvider {
 		Vpc:               os.Getenv("VPC"),
 		VpcCidr:           os.Getenv("VPCCIDR"),
 	}
+
+	s := session.New()
+	p.EC2 = ec2.New(s, p.config())
+
+	return p
 }
 
 /** services ****************************************************************************************/
