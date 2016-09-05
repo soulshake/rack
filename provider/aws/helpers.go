@@ -275,7 +275,7 @@ func (p *AWSProvider) dynamoBatchDeleteItems(wrs []*dynamodb.WriteRequest, table
 	if len(wrs) > 0 {
 
 		if len(wrs) <= 25 {
-			_, err := p.dynamodb().BatchWriteItem(&dynamodb.BatchWriteItemInput{
+			_, err := p.DynamoDB.BatchWriteItem(&dynamodb.BatchWriteItemInput{
 				RequestItems: map[string][]*dynamodb.WriteRequest{
 					tableName: wrs,
 				},
@@ -294,7 +294,7 @@ func (p *AWSProvider) dynamoBatchDeleteItems(wrs []*dynamodb.WriteRequest, table
 					high = len(wrs)
 				}
 
-				_, err := p.dynamodb().BatchWriteItem(&dynamodb.BatchWriteItemInput{
+				_, err := p.DynamoDB.BatchWriteItem(&dynamodb.BatchWriteItemInput{
 					RequestItems: map[string][]*dynamodb.WriteRequest{
 						tableName: wrs[i:high],
 					},
@@ -319,7 +319,7 @@ func (p *AWSProvider) describeStacks(input *cloudformation.DescribeStacksInput) 
 		return res, nil
 	}
 
-	res, err := p.cloudformation().DescribeStacks(input)
+	res, err := p.CloudFormation.DescribeStacks(input)
 
 	if err != nil {
 		return nil, err
@@ -358,7 +358,7 @@ func (p *AWSProvider) describeStackEvents(input *cloudformation.DescribeStackEve
 		return res, nil
 	}
 
-	res, err := p.cloudformation().DescribeStackEvents(input)
+	res, err := p.CloudFormation.DescribeStackEvents(input)
 	if err != nil {
 		return nil, err
 	}
@@ -378,7 +378,7 @@ func (p *AWSProvider) describeTaskDefinition(name string) (*ecs.TaskDefinition, 
 		return td, nil
 	}
 
-	res, err := p.ecs().DescribeTaskDefinition(&ecs.DescribeTaskDefinitionInput{
+	res, err := p.ECS.DescribeTaskDefinition(&ecs.DescribeTaskDefinitionInput{
 		TaskDefinition: aws.String(name),
 	})
 	if ae, ok := err.(awserr.Error); ok && ae.Code() == "ValidationError" {
@@ -422,7 +422,7 @@ func (p *AWSProvider) listContainerInstances(input *ecs.ListContainerInstancesIn
 }
 
 func (p *AWSProvider) s3Exists(bucket, key string) (bool, error) {
-	_, err := p.s3().HeadObject(&s3.HeadObjectInput{
+	_, err := p.S3.HeadObject(&s3.HeadObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
@@ -444,7 +444,7 @@ func (p *AWSProvider) s3Get(bucket, key string) ([]byte, error) {
 		Key:    aws.String(key),
 	}
 
-	res, err := p.s3().GetObject(req)
+	res, err := p.S3.GetObject(req)
 
 	if err != nil {
 		return nil, err
@@ -459,7 +459,7 @@ func (p *AWSProvider) s3Delete(bucket, key string) error {
 		Key:    aws.String(key),
 	}
 
-	_, err := p.s3().DeleteObject(req)
+	_, err := p.S3.DeleteObject(req)
 
 	return err
 }
@@ -476,7 +476,7 @@ func (p *AWSProvider) s3Put(bucket, key string, data []byte, public bool) error 
 		req.ACL = aws.String("public-read")
 	}
 
-	_, err := p.s3().PutObject(req)
+	_, err := p.S3.PutObject(req)
 
 	return err
 }
@@ -542,7 +542,7 @@ func (p *AWSProvider) updateStack(name string, template string, changes map[stri
 		}
 	}
 
-	_, err := p.cloudformation().UpdateStack(req)
+	_, err := p.CloudFormation.UpdateStack(req)
 
 	cache.Clear("describeStacks", nil)
 	cache.Clear("describeStacks", name)

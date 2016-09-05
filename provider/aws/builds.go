@@ -197,7 +197,7 @@ func (p *AWSProvider) BuildDelete(app, id string) (*structs.Build, error) {
 	}
 
 	// delete build item
-	_, err = p.dynamodb().DeleteItem(&dynamodb.DeleteItemInput{
+	_, err = p.DynamoDB.DeleteItem(&dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			"id": &dynamodb.AttributeValue{S: aws.String(id)},
 		},
@@ -221,7 +221,7 @@ func (p *AWSProvider) BuildGet(app, id string) (*structs.Build, error) {
 		TableName: aws.String(p.DynamoBuilds),
 	}
 
-	res, err := p.dynamodb().GetItem(req)
+	res, err := p.DynamoDB.GetItem(req)
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +249,7 @@ func (p *AWSProvider) BuildLogs(app, id string) (string, error) {
 		Key:    aws.String(key),
 	}
 
-	res, err := p.s3().GetObject(req)
+	res, err := p.S3.GetObject(req)
 	if err != nil {
 		if awsError(err) == "NoSuchKey" {
 			return "", nil
@@ -285,7 +285,7 @@ func (p *AWSProvider) BuildList(app string, limit int64) (structs.Builds, error)
 		TableName:        aws.String(p.DynamoBuilds),
 	}
 
-	res, err := p.dynamodb().Query(req)
+	res, err := p.DynamoDB.Query(req)
 	if err != nil {
 		return nil, err
 	}
@@ -386,7 +386,7 @@ func (p *AWSProvider) BuildSave(b *structs.Build) error {
 	}
 
 	if b.Logs != "" {
-		_, err := p.s3().PutObject(&s3.PutObjectInput{
+		_, err := p.S3.PutObject(&s3.PutObjectInput{
 			Body:          bytes.NewReader([]byte(b.Logs)),
 			Bucket:        aws.String(a.Outputs["Settings"]),
 			ContentLength: aws.Int64(int64(len(b.Logs))),
@@ -397,7 +397,7 @@ func (p *AWSProvider) BuildSave(b *structs.Build) error {
 		}
 	}
 
-	_, err = p.dynamodb().PutItem(req)
+	_, err = p.DynamoDB.PutItem(req)
 
 	return err
 }
@@ -435,7 +435,7 @@ func (p *AWSProvider) buildEnv(a *structs.App, b *structs.Build, manifest_path s
 
 	// ECR auth
 	if registryId := a.Outputs["RegistryId"]; registryId != "" {
-		res, err := p.ecr().GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{
+		res, err := p.ECR.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{
 			RegistryIds: []*string{aws.String(registryId)},
 		})
 
@@ -702,7 +702,7 @@ func (p *AWSProvider) deleteImages(a *structs.App, b *structs.Build) error {
 		}
 	}
 
-	_, err = p.ecr().BatchDeleteImage(&ecr.BatchDeleteImageInput{
+	_, err = p.ECR.BatchDeleteImage(&ecr.BatchDeleteImageInput{
 		ImageIds:       imageIds,
 		RegistryId:     aws.String(registryId),
 		RepositoryName: aws.String(repositoryName),
@@ -732,7 +732,7 @@ func (p *AWSProvider) buildsDeleteAll(app *structs.App) error {
 		TableName: aws.String(p.DynamoBuilds),
 	}
 
-	res, err := p.dynamodb().Query(qi)
+	res, err := p.DynamoDB.Query(qi)
 	if err != nil {
 		return err
 	}

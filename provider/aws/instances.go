@@ -40,7 +40,7 @@ func (p *AWSProvider) InstanceList() (structs.Instances, error) {
 			ec2Instances[*i.InstanceId] = i
 			ec2Metrics[*i.InstanceId] = 0.0
 
-			res, err := p.cloudwatch().GetMetricStatistics(&cloudwatch.GetMetricStatisticsInput{
+			res, err := p.CloudWatch.GetMetricStatistics(&cloudwatch.GetMetricStatisticsInput{
 				Dimensions: []*cloudwatch.Dimension{
 					&cloudwatch.Dimension{Name: aws.String("InstanceId"), Value: i.InstanceId},
 				},

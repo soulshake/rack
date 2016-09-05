@@ -79,7 +79,7 @@ func (p *AWSProvider) SystemReleases() (structs.Releases, error) {
 		TableName:        aws.String(p.DynamoReleases),
 	}
 
-	res, err := p.dynamodb().Query(req)
+	res, err := p.DynamoDB.Query(req)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (p *AWSProvider) SystemSave(system structs.System) error {
 
 	// if there is a version update then record it
 	if v, ok := changes["version"]; ok {
-		_, err := p.dynamodb().PutItem(&dynamodb.PutItemInput{
+		_, err := p.DynamoDB.PutItem(&dynamodb.PutItemInput{
 			Item: map[string]*dynamodb.AttributeValue{
 				"id":      &dynamodb.AttributeValue{S: aws.String(v)},
 				"app":     &dynamodb.AttributeValue{S: aws.String(p.Rack)},

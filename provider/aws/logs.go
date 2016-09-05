@@ -66,7 +66,7 @@ func (p *AWSProvider) fetchLogs(w io.Writer, group, filter string, start int64) 
 	events := []*cloudwatchlogs.FilteredLogEvent{}
 
 	for {
-		res, err := p.cloudwatchlogs().FilterLogEvents(req)
+		res, err := p.CloudWatchLogs.FilterLogEvents(req)
 		if ae, ok := err.(awserr.Error); ok && ae.Code() == "ThrottlingException" {
 			// backoff
 			log.Error(err)

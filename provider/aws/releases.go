@@ -31,7 +31,7 @@ func (p *AWSProvider) ReleaseGet(app, id string) (*structs.Release, error) {
 		TableName: aws.String(p.DynamoReleases),
 	}
 
-	res, err := p.dynamodb().GetItem(req)
+	res, err := p.DynamoDB.GetItem(req)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (p *AWSProvider) ReleaseList(app string, limit int64) (structs.Releases, er
 		TableName:        aws.String(p.DynamoReleases),
 	}
 
-	res, err := p.dynamodb().Query(req)
+	res, err := p.DynamoDB.Query(req)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (p *AWSProvider) ReleaseSave(r *structs.Release, bucket, key string) error 
 		}
 	}
 
-	_, err = p.s3().PutObject(&s3.PutObjectInput{
+	_, err = p.S3.PutObject(&s3.PutObjectInput{
 		ACL:           aws.String("public-read"),
 		Body:          bytes.NewReader(env),
 		Bucket:        aws.String(bucket),
@@ -146,7 +146,7 @@ func (p *AWSProvider) ReleaseSave(r *structs.Release, bucket, key string) error 
 		return err
 	}
 
-	_, err = p.dynamodb().PutItem(req)
+	_, err = p.DynamoDB.PutItem(req)
 	return err
 }
 
@@ -204,7 +204,7 @@ func (p *AWSProvider) releaseDeleteAll(app string) error {
 // deleteReleaseItems deletes release items from Dynamodb based on query input and the tableName
 func (p *AWSProvider) deleteReleaseItems(qi *dynamodb.QueryInput, tableName string) error {
 
-	res, err := p.dynamodb().Query(qi)
+	res, err := p.DynamoDB.Query(qi)
 	if err != nil {
 		return err
 	}

@@ -32,7 +32,7 @@ func (p *AWSProvider) CertificateCreate(pub, key, chain string) (*structs.Certif
 		req.CertificateChain = aws.String(chain)
 	}
 
-	res, err := p.iam().UploadServerCertificate(req)
+	res, err := p.IAM.UploadServerCertificate(req)
 
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (p *AWSProvider) CertificateCreate(pub, key, chain string) (*structs.Certif
 }
 
 func (p *AWSProvider) CertificateDelete(id string) error {
-	_, err := p.iam().DeleteServerCertificate(&iam.DeleteServerCertificateInput{
+	_, err := p.IAM.DeleteServerCertificate(&iam.DeleteServerCertificateInput{
 		ServerCertificateName: aws.String(id),
 	})
 
@@ -77,7 +77,7 @@ func (p *AWSProvider) CertificateGenerate(domains []string) (*structs.Certificat
 		req.SubjectAlternativeNames = alts
 	}
 
-	res, err := p.acm().RequestCertificate(req)
+	res, err := p.ACM.RequestCertificate(req)
 
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (p *AWSProvider) CertificateGenerate(domains []string) (*structs.Certificat
 }
 
 func (p *AWSProvider) CertificateList() (structs.Certificates, error) {
-	res, err := p.iam().ListServerCertificates(nil)
+	res, err := p.IAM.ListServerCertificates(nil)
 
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ func (p *AWSProvider) CertificateList() (structs.Certificates, error) {
 	certs := structs.Certificates{}
 
 	for _, cert := range res.ServerCertificateMetadataList {
-		res, err := p.iam().GetServerCertificate(&iam.GetServerCertificateInput{
+		res, err := p.IAM.GetServerCertificate(&iam.GetServerCertificateInput{
 			ServerCertificateName: cert.ServerCertificateName,
 		})
 		if err != nil {
@@ -155,7 +155,7 @@ func (e CfsslError) Error() string {
 func (p *AWSProvider) certificateListACM() (structs.Certificates, error) {
 	certs := structs.Certificates{}
 
-	ares, err := p.acm().ListCertificates(nil)
+	ares, err := p.ACM.ListCertificates(nil)
 
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func (p *AWSProvider) certificateListACM() (structs.Certificates, error) {
 			Domain: *cert.DomainName,
 		}
 
-		res, err := p.acm().DescribeCertificate(&acm.DescribeCertificateInput{
+		res, err := p.ACM.DescribeCertificate(&acm.DescribeCertificateInput{
 			CertificateArn: cert.CertificateArn,
 		})
 

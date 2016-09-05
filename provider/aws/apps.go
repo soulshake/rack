@@ -48,7 +48,7 @@ func (p *AWSProvider) AppDelete(name string) error {
 		return err
 	}
 
-	_, err = p.cloudformation().DeleteStack(&cloudformation.DeleteStackInput{StackName: aws.String(app.StackName())})
+	_, err = p.CloudFormation.DeleteStack(&cloudformation.DeleteStackInput{StackName: aws.String(app.StackName())})
 	if err != nil {
 		helpers.TrackEvent("kernel-app-delete-error", nil)
 		return err
@@ -74,7 +74,7 @@ func (p *AWSProvider) cleanup(app *structs.App) error {
 		return err
 	}
 
-	_, err = p.ecr().DeleteRepository(&ecr.DeleteRepositoryInput{
+	_, err = p.ECR.DeleteRepository(&ecr.DeleteRepositoryInput{
 		RepositoryName: aws.String(app.Outputs["RegistryRepository"]),
 		Force:          aws.Bool(true),
 	})
@@ -94,7 +94,7 @@ func (p *AWSProvider) cleanup(app *structs.App) error {
 	shouldRetry := true
 
 	for i := 0; i < 60; i++ {
-		res, err := p.cloudformation().DescribeStacks(&cloudformation.DescribeStacksInput{
+		res, err := p.CloudFormation.DescribeStacks(&cloudformation.DescribeStacksInput{
 			StackName: aws.String(app.StackName()),
 		})
 
@@ -103,7 +103,7 @@ func (p *AWSProvider) cleanup(app *structs.App) error {
 			if ae.Code() == "ValidationError" { // Error indicates stack wasn't found, hence deleted.
 				helpers.TrackEvent("kernel-app-delete-success", nil)
 				// Last ditch effort to remove the empty bucket CF leaves behind.
-				_, err := p.s3().DeleteBucket(&s3.DeleteBucketInput{Bucket: aws.String(app.Outputs["Settings"])})
+				_, err := p.S3.DeleteBucket(&s3.DeleteBucketInput{Bucket: aws.String(app.Outputs["Settings"])})
 				if err != nil {
 					fmt.Printf("last ditch effort bucket error: %s\n", err)
 				}
@@ -117,7 +117,7 @@ func (p *AWSProvider) cleanup(app *structs.App) error {
 			if *s.StackStatus == "DELETE_FAILED" {
 				helpers.TrackEvent("kernel-app-delete-retry", nil)
 
-				_, err := p.cloudformation().DeleteStack(&cloudformation.DeleteStackInput{StackName: aws.String(app.StackName())})
+				_, err := p.CloudFormation.DeleteStack(&cloudformation.DeleteStackInput{StackName: aws.String(app.StackName())})
 
 				if err != nil {
 					helpers.TrackEvent("kernel-app-delete-retry-error", nil)
@@ -139,7 +139,7 @@ func (p *AWSProvider) deleteBucket(bucket string) error {
 		Bucket: aws.String(bucket),
 	}
 
-	res, err := p.s3().ListObjectVersions(req)
+	res, err := p.S3.ListObjectVersions(req)
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func (p *AWSProvider) deleteBucket(bucket string) error {
 				objects = append(objects, &s3.ObjectIdentifier{Key: obj.Key, VersionId: obj.VersionId})
 			}
 
-			_, err := p.s3().DeleteObjects(&s3.DeleteObjectsInput{
+			_, err := p.S3.DeleteObjects(&s3.DeleteObjectsInput{
 				Bucket: aws.String(bucket),
 				Delete: &s3.Delete{
 					Objects: objects,
@@ -188,7 +188,7 @@ func (p *AWSProvider) deleteBucket(bucket string) error {
 				objects = append(objects, &s3.ObjectIdentifier{Key: obj.Key, VersionId: obj.VersionId})
 			}
 
-			_, err := p.s3().DeleteObjects(&s3.DeleteObjectsInput{
+			_, err := p.S3.DeleteObjects(&s3.DeleteObjectsInput{
 				Bucket: aws.String(bucket),
 				Delete: &s3.Delete{
 					Objects: objects,
@@ -202,7 +202,7 @@ func (p *AWSProvider) deleteBucket(bucket string) error {
 
 	wg.Wait()
 
-	_, err = p.s3().DeleteBucket(&s3.DeleteBucketInput{
+	_, err = p.S3.DeleteBucket(&s3.DeleteBucketInput{
 		Bucket: aws.String(bucket),
 	})
 	if err != nil {
@@ -219,7 +219,7 @@ func (p *AWSProvider) cleanupBucketObject(bucket, key, version string) {
 		VersionId: aws.String(version),
 	}
 
-	_, err := p.s3().DeleteObject(req)
+	_, err := p.S3.DeleteObject(req)
 	if err != nil {
 		fmt.Printf("error: %s\n", err)
 	}

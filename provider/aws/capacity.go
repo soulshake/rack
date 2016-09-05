@@ -66,7 +66,7 @@ func (p *AWSProvider) CapacityGet() (*structs.Capacity, error) {
 			}
 		}
 
-		res, err := p.ecs().DescribeTaskDefinition(&ecs.DescribeTaskDefinitionInput{
+		res, err := p.ECS.DescribeTaskDefinition(&ecs.DescribeTaskDefinitionInput{
 			TaskDefinition: service.TaskDefinition,
 		})
 		if err != nil {
@@ -101,7 +101,7 @@ type ECSServices []*ecs.Service
 func (p *AWSProvider) clusterServices() (ECSServices, error) {
 	services := ECSServices{}
 
-	lsres, err := p.ecs().ListServices(&ecs.ListServicesInput{
+	lsres, err := p.ECS.ListServices(&ecs.ListServicesInput{
 		Cluster: aws.String(p.Cluster),
 	})
 
@@ -109,7 +109,7 @@ func (p *AWSProvider) clusterServices() (ECSServices, error) {
 		return services, err
 	}
 
-	dsres, err := p.ecs().DescribeServices(&ecs.DescribeServicesInput{
+	dsres, err := p.ECS.DescribeServices(&ecs.DescribeServicesInput{
 		Cluster:  aws.String(p.Cluster),
 		Services: lsres.ServiceArns,
 	})

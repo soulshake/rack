@@ -66,8 +66,17 @@ type AWSProvider struct {
 	SkipCache bool
 
 	// AWS services
-	EC2 ec2iface.EC2API
-	ECS ecsiface.ECSAPI
+	ACM            acmiface.ACMAPI
+	CloudFormation cloudformationiface.CloudFormationAPI
+	CloudWatch     cloudwatchiface.CloudWatchAPI
+	CloudWatchLogs cloudwatchlogsiface.CloudWatchLogsAPI
+	DynamoDB       dynamodbiface.DynamoDBAPI
+	EC2            ec2iface.EC2API
+	ECR            ecriface.ECRAPI
+	ECS            ecsiface.ECSAPI
+	IAM            iamiface.IAMAPI
+	S3             s3iface.S3API
+	SNS            snsiface.SNSAPI
 }
 
 // NewProviderFromEnv returns a new AWS provider from env vars
@@ -96,8 +105,18 @@ func NewProviderFromEnv() *AWSProvider {
 	}
 
 	s := session.New()
+
+	p.ACM = acm.New(s, p.config())
+	p.CloudFormation = cloudformation.New(s, p.config())
+	p.CloudWatch = cloudwatch.New(s, p.config())
+	p.CloudWatchLogs = cloudwatchlogs.New(s, p.config())
+	p.DynamoDB = dynamodb.New(s, p.config())
 	p.EC2 = ec2.New(s, p.config())
+	p.ECR = ecr.New(s, p.config())
 	p.ECS = ecs.New(s, p.config())
+	p.IAM = iam.New(s, p.config())
+	p.S3 = s3.New(s, p.config().WithS3ForcePathStyle(true)) // path style is easier to test
+	p.SNS = sns.New(s, p.config())
 
 	return p
 }
@@ -122,54 +141,6 @@ func (p *AWSProvider) config() *aws.Config {
 	}
 
 	return config
-}
-
-func (p *AWSProvider) acm() acmiface.ACMAPI {
-	return acm.New(session.New(), p.config())
-}
-
-func (p *AWSProvider) cloudformation() cloudformationiface.CloudFormationAPI {
-	return cloudformation.New(session.New(), p.config())
-}
-
-func (p *AWSProvider) cloudwatch() cloudwatchiface.CloudWatchAPI {
-	return cloudwatch.New(session.New(), p.config())
-}
-
-func (p *AWSProvider) cloudwatchlogs() cloudwatchlogsiface.CloudWatchLogsAPI {
-	return cloudwatchlogs.New(session.New(), p.config())
-}
-
-func (p *AWSProvider) dynamodb() dynamodbiface.DynamoDBAPI {
-	return dynamodb.New(session.New(), p.config())
-}
-
-func (p *AWSProvider) ec2() ec2iface.EC2API {
-	return ec2.New(session.New(), p.config())
-}
-
-func (p *AWSProvider) ecr() ecriface.ECRAPI {
-	return ecr.New(session.New(), p.config())
-}
-
-func (p *AWSProvider) ecs() ecsiface.ECSAPI {
-	return ecs.New(session.New(), p.config())
-}
-
-func (p *AWSProvider) iam() iamiface.IAMAPI {
-	return iam.New(session.New(), p.config())
-}
-
-// s3 returns an S3 client configured to use the path style
-// (http://s3.amazonaws.com/johnsmith.net/homepage.html) vs virtual
-// hosted style (http://johnsmith.net.s3.amazonaws.com/homepage.html)
-// since path style is easier to test.
-func (p *AWSProvider) s3() s3iface.S3API {
-	return s3.New(session.New(), p.config().WithS3ForcePathStyle(true))
-}
-
-func (p *AWSProvider) sns() snsiface.SNSAPI {
-	return sns.New(session.New(), p.config())
 }
 
 // IsTest returns true when we're in test mode

@@ -95,7 +95,7 @@ func (p *AWSProvider) ServiceCreate(name, kind string, params map[string]string)
 		req.Tags = append(req.Tags, &cloudformation.Tag{Key: aws.String(key), Value: aws.String(tags[key])})
 	}
 
-	_, err = p.cloudformation().CreateStack(req)
+	_, err = p.CloudFormation.CreateStack(req)
 
 	p.EventSend(&structs.Event{
 		Action: "service:create",
@@ -114,7 +114,7 @@ func (p *AWSProvider) ServiceDelete(name string) (*structs.Service, error) {
 		return nil, err
 	}
 
-	_, err = p.cloudformation().DeleteStack(&cloudformation.DeleteStackInput{
+	_, err = p.CloudFormation.DeleteStack(&cloudformation.DeleteStackInput{
 		StackName: aws.String(s.Stack),
 	})
 
@@ -395,7 +395,7 @@ func (p *AWSProvider) updateService(s *structs.Service) error {
 		})
 	}
 
-	_, err = p.cloudformation().UpdateStack(req)
+	_, err = p.CloudFormation.UpdateStack(req)
 
 	return err
 }

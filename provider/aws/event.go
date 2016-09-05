@@ -46,7 +46,7 @@ func (p *AWSProvider) EventSend(e *structs.Event, err error) error {
 	fmt.Printf("aws EventSend msg=%q\n", msg)
 
 	// Publish Event to SNS
-	_, err = p.sns().Publish(&sns.PublishInput{
+	_, err = p.SNS.Publish(&sns.PublishInput{
 		Message:   aws.String(string(msg)), // Required
 		Subject:   aws.String(e.Action),
 		TargetArn: aws.String(p.NotificationTopic),
