@@ -29,6 +29,9 @@ type InstanceResource struct {
 }
 
 func (ir InstanceResource) PercentUsed() float64 {
+	if ir.Total == 0 {
+		return 0
+	}
 	return float64(ir.Used) / float64(ir.Total)
 }
 
