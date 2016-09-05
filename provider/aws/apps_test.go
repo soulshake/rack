@@ -4,8 +4,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/convox/rack/api/awsutil"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/convox/rack/api/structs"
+	"github.com/convox/rack/provider/aws/mocks"
+	"github.com/golang/mock/gomock"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -15,21 +18,18 @@ func init() {
 }
 
 func TestAppGet(t *testing.T) {
-	provider := StubAwsProvider(
-		describeStacksCycle,
-	)
+	provider := StubAwsProvider()
 	defer provider.Close()
 
-	a, err := provider.AppGet("httpd")
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 
-	assert.Nil(t, err)
-	assert.EqualValues(t, &structs.App{
+	expectedApp := &structs.App{
 		Name:    "httpd",
-		Release: "RVFETUHHKKD",
+		Release: "RFUJGNCWNZS",
 		Status:  "running",
 		Outputs: map[string]string{
 			"BalancerWebHost":       "httpd-web-7E5UPCM-1241527783.us-east-1.elb.amazonaws.com",
-			"Kinesis":               "convox-httpd-Kinesis-1MAP0GJ6RITJF",
 			"LogGroup":              "convox-httpd-LogGroup-L4V203L35WRM",
 			"RegistryId":            "132866487567",
 			"RegistryRepository":    "convox-httpd-hqvvfosgxt",
@@ -40,22 +40,21 @@ func TestAppGet(t *testing.T) {
 		Parameters: map[string]string{
 			"WebMemory":              "256",
 			"WebCpu":                 "256",
-			"Release":                "RVFETUHHKKD",
+			"Release":                "RFUJGNCWNZS",
 			"Subnets":                "subnet-13de3139,subnet-b5578fc3,subnet-21c13379",
-			"Private":                "Yes",
+			"Internal":               "No",
 			"WebPort80ProxyProtocol": "No",
 			"VPC":                  "vpc-f8006b9c",
 			"Cluster":              "convox-Cluster-1E4XJ0PQWNAYS",
 			"Key":                  "arn:aws:kms:us-east-1:132866487567:key/d9f38426-9017-4931-84f8-604ad1524920",
 			"Repository":           "",
 			"WebPort80Balancer":    "80",
-			"SubnetsPrivate":       "subnet-d4e85cfe,subnet-103d5a66,subnet-57952a0f",
-			"Environment":          "https://convox-httpd-settings-139bidzalmbtu.s3.amazonaws.com/releases/RVFETUHHKKD/env",
+			"Environment":          "https://convox-httpd-settings-139bidzalmbtu.s3.amazonaws.com/releases/RFUJGNCWNZS/env",
 			"WebPort80Certificate": "",
 			"WebPort80Host":        "56694",
 			"WebDesiredCount":      "1",
 			"WebPort80Secure":      "No",
-			"Version":              "20160330143438-command-exec-form",
+			"Version":              "20160330143438",
 		},
 		Tags: map[string]string{
 			"Name":   "httpd",
@@ -63,152 +62,142 @@ func TestAppGet(t *testing.T) {
 			"System": "convox",
 			"Rack":   "convox",
 		},
-	}, a)
-}
+	}
 
-var describeStacksUnbound400Cycle = awsutil.Cycle{
-	awsutil.Request{"/", "", `Action=DescribeStacks&StackName=convox-httpd-old&Version=2010-05-15`},
-	awsutil.Response{400, `<ErrorResponse xmlns="http://cloudformation.amazonaws.com/doc/2010-05-15/">
-  <Error>
-    <Type>Sender</Type>
-    <Code>ValidationError</Code>
-    <Message>Stack with id convox-httpd-old does not exist</Message>
-  </Error>
-  <RequestId>e451bda1-f773-11e5-aaca-ed87e77a45b8</RequestId>
-</ErrorResponse>`},
-}
+	cfMock := mocks.NewMockCloudFormationAPI(mockCtrl)
+	cfMock.EXPECT().DescribeStacks(&cloudformation.DescribeStacksInput{
+		StackName: aws.String(provider.Rack + "-" + "httpd"),
+	}).Return(&cloudformation.DescribeStacksOutput{
+		Stacks: []*cloudformation.Stack{
+			&cloudformation.Stack{
+				StackName:   aws.String("convox-httpd"),
+				StackStatus: aws.String("UPDATE_COMPLETE"),
+				Tags: []*cloudformation.Tag{
+					&cloudformation.Tag{
+						Key:   aws.String("Name"),
+						Value: aws.String("httpd"),
+					},
+					&cloudformation.Tag{
+						Key:   aws.String("Type"),
+						Value: aws.String("app"),
+					},
+					&cloudformation.Tag{
+						Key:   aws.String("System"),
+						Value: aws.String("convox"),
+					},
+					&cloudformation.Tag{
+						Key:   aws.String("Rack"),
+						Value: aws.String("convox"),
+					},
+				},
+				Parameters: []*cloudformation.Parameter{
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("Release"),
+						ParameterValue: aws.String("RFUJGNCWNZS"),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("Internal"),
+						ParameterValue: aws.String("No"),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("WebMemory"),
+						ParameterValue: aws.String("256"),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("WebCpu"),
+						ParameterValue: aws.String("256"),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("Subnets"),
+						ParameterValue: aws.String("subnet-13de3139,subnet-b5578fc3,subnet-21c13379"),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("WebPort80ProxyProtocol"),
+						ParameterValue: aws.String("No"),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("VPC"),
+						ParameterValue: aws.String("vpc-f8006b9c"),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("Cluster"),
+						ParameterValue: aws.String("convox-Cluster-1E4XJ0PQWNAYS"),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("Key"),
+						ParameterValue: aws.String("arn:aws:kms:us-east-1:132866487567:key/d9f38426-9017-4931-84f8-604ad1524920"),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("Repository"),
+						ParameterValue: aws.String(""),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("WebPort80Balancer"),
+						ParameterValue: aws.String("80"),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("Environment"),
+						ParameterValue: aws.String("https://convox-httpd-settings-139bidzalmbtu.s3.amazonaws.com/releases/RFUJGNCWNZS/env"),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("WebPort80Certificate"),
+						ParameterValue: aws.String(""),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("WebPort80Host"),
+						ParameterValue: aws.String("56694"),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("WebDesiredCount"),
+						ParameterValue: aws.String("1"),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("WebPort80Secure"),
+						ParameterValue: aws.String("No"),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("Version"),
+						ParameterValue: aws.String("20160330143438"),
+					},
+				},
+				Outputs: []*cloudformation.Output{
+					&cloudformation.Output{
+						OutputKey:   aws.String("BalancerWebHost"),
+						OutputValue: aws.String("httpd-web-7E5UPCM-1241527783.us-east-1.elb.amazonaws.com"),
+					},
+					&cloudformation.Output{
+						OutputKey:   aws.String("LogGroup"),
+						OutputValue: aws.String("convox-httpd-LogGroup-L4V203L35WRM"),
+					},
+					&cloudformation.Output{
+						OutputKey:   aws.String("RegistryId"),
+						OutputValue: aws.String("132866487567"),
+					},
+					&cloudformation.Output{
+						OutputKey:   aws.String("RegistryRepository"),
+						OutputValue: aws.String("convox-httpd-hqvvfosgxt"),
+					},
+					&cloudformation.Output{
+						OutputKey:   aws.String("Settings"),
+						OutputValue: aws.String("convox-httpd-settings-139bidzalmbtu"),
+					},
+					&cloudformation.Output{
+						OutputKey:   aws.String("WebPort80Balancer"),
+						OutputValue: aws.String("80"),
+					},
+					&cloudformation.Output{
+						OutputKey:   aws.String("WebPort80BalancerName"),
+						OutputValue: aws.String("httpd-web-7E5UPCM"),
+					},
+				},
+			},
+		},
+	}, nil)
 
-var describeStacksUnboundCycle = awsutil.Cycle{
-	awsutil.Request{"/", "", `Action=DescribeStacks&StackName=httpd-old&Version=2010-05-15`},
-	awsutil.Response{200, `<DescribeStacksResponse xmlns="http://cloudformation.amazonaws.com/doc/2010-05-15/">
-  <DescribeStacksResult>
-    <Stacks>
-      <member>
-        <Tags>
-          <member>
-            <Value>app</Value>
-            <Key>Type</Key>
-          </member>
-          <member>
-            <Value>convox</Value>
-            <Key>System</Key>
-          </member>
-          <member>
-            <Value>convox</Value>
-            <Key>Rack</Key>
-          </member>
-        </Tags>
-        <StackId>arn:aws:cloudformation:us-east-1:132866487567:stack/httpd-old/0338bdc0-f776-11e5-ae6e-500c524294d2</StackId>
-        <StackStatus>UPDATE_COMPLETE</StackStatus>
-        <StackName>httpd-old</StackName>
-        <LastUpdatedTime>2016-03-31T19:27:16.620Z</LastUpdatedTime>
-        <NotificationARNs/>
-        <CreationTime>2016-03-31T19:23:13.702Z</CreationTime>
-        <Parameters>
-          <member>
-            <ParameterValue>https://httpd-old-settings-17w6y79y4ppel.s3.amazonaws.com/releases/RBJFRKXUHTD/env</ParameterValue>
-            <ParameterKey>Environment</ParameterKey>
-          </member>
-          <member>
-            <ParameterValue/>
-            <ParameterKey>WebPort80Certificate</ParameterKey>
-          </member>
-          <member>
-            <ParameterValue>arn:aws:kms:us-east-1:132866487567:key/d9f38426-9017-4931-84f8-604ad1524920</ParameterValue>
-            <ParameterKey>Key</ParameterKey>
-          </member>
-          <member>
-            <ParameterValue>256</ParameterValue>
-            <ParameterKey>WebMemory</ParameterKey>
-          </member>
-          <member>
-            <ParameterValue/>
-            <ParameterKey>Repository</ParameterKey>
-          </member>
-          <member>
-            <ParameterValue>80</ParameterValue>
-            <ParameterKey>WebPort80Balancer</ParameterKey>
-          </member>
-          <member>
-            <ParameterValue>37636</ParameterValue>
-            <ParameterKey>WebPort80Host</ParameterKey>
-          </member>
-          <member>
-            <ParameterValue>vpc-f8006b9c</ParameterValue>
-            <ParameterKey>VPC</ParameterKey>
-          </member>
-          <member>
-            <ParameterValue>1</ParameterValue>
-            <ParameterKey>WebDesiredCount</ParameterKey>
-          </member>
-          <member>
-            <ParameterValue>convox-Cluster-1E4XJ0PQWNAYS</ParameterValue>
-            <ParameterKey>Cluster</ParameterKey>
-          </member>
-          <member>
-            <ParameterValue>RBJFRKXUHTD</ParameterValue>
-            <ParameterKey>Release</ParameterKey>
-          </member>
-          <member>
-            <ParameterValue>No</ParameterValue>
-            <ParameterKey>WebPort80Secure</ParameterKey>
-          </member>
-          <member>
-            <ParameterValue>256</ParameterValue>
-            <ParameterKey>WebCpu</ParameterKey>
-          </member>
-          <member>
-            <ParameterValue>subnet-13de3139,subnet-b5578fc3,subnet-21c13379</ParameterValue>
-            <ParameterKey>Subnets</ParameterKey>
-          </member>
-          <member>
-            <ParameterValue>20160330143438-command-exec-form</ParameterValue>
-            <ParameterKey>Version</ParameterKey>
-          </member>
-        </Parameters>
-        <DisableRollback>false</DisableRollback>
-        <Capabilities>
-          <member>CAPABILITY_IAM</member>
-        </Capabilities>
-        <Outputs>
-          <member>
-            <OutputValue>httpd-old-132500142.us-east-1.elb.amazonaws.com</OutputValue>
-            <OutputKey>BalancerWebHost</OutputKey>
-          </member>
-          <member>
-            <OutputValue>httpd-old-Kinesis-1E7IWRINRFHLF</OutputValue>
-            <OutputKey>Kinesis</OutputKey>
-          </member>
-          <member>
-            <OutputValue>httpd-old-LogGroup-P27NBY2OI3CP</OutputValue>
-            <OutputKey>LogGroup</OutputKey>
-          </member>
-          <member>
-            <OutputValue>132866487567</OutputValue>
-            <OutputKey>RegistryId</OutputKey>
-          </member>
-          <member>
-            <OutputValue>httpd-old-wcuacldvzi</OutputValue>
-            <OutputKey>RegistryRepository</OutputKey>
-          </member>
-          <member>
-            <OutputValue>httpd-old-settings-17w6y79y4ppel</OutputValue>
-            <OutputKey>Settings</OutputKey>
-          </member>
-          <member>
-            <OutputValue>80</OutputValue>
-            <OutputKey>WebPort80Balancer</OutputKey>
-          </member>
-          <member>
-            <OutputValue>httpd-old</OutputValue>
-            <OutputKey>WebPort80BalancerName</OutputKey>
-          </member>
-        </Outputs>
-      </member>
-    </Stacks>
-  </DescribeStacksResult>
-  <ResponseMetadata>
-    <RequestId>e41b6410-f776-11e5-9d00-3de14f66444d</RequestId>
-  </ResponseMetadata>
-</DescribeStacksResponse>`},
+	provider.CloudFormation = cfMock
+
+	a, err := provider.AppGet("httpd")
+
+	assert.Nil(t, err)
+	assert.EqualValues(t, expectedApp, a)
 }
