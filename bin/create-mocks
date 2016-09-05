@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e
+
+
+go get github.com/golang/mock/gomock
+go get github.com/golang/mock/mockgen
+
+services=(acm cloudformation cloudwatch cloudwatchlogs dynamodb ec2 ecr iam s3 sns)
+
+for service in "${services[@]}"
+do
+	mockgen -source=vendor/github.com/aws/aws-sdk-go/service/$service/"$service"iface/interface.go --destination=provider/aws/mocks/$service.go --package=mocks
+done
