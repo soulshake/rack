@@ -5,9 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/convox/rack/api/awsutil"
 	"github.com/convox/rack/api/models"
 	"github.com/convox/rack/api/structs"
+	"github.com/convox/rack/provider/aws/mocks"
+	"github.com/golang/mock/gomock"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -20,20 +24,55 @@ func init() {
 }
 
 func TestBuildGet(t *testing.T) {
-	provider := StubAwsProvider(
-		build1GetItemCycle,
-	)
+	provider := StubAwsProvider()
 	defer provider.Close()
 
-	b, err := provider.BuildGet("httpd", "BHINCLZYYVN")
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	dynamoMock := mocks.NewMockDynamoDBAPI(mockCtrl)
+	dynamoMock.EXPECT().GetItem(&dynamodb.GetItemInput{
+		ConsistentRead: aws.Bool(true),
+		Key: map[string]*dynamodb.AttributeValue{
+			"id": &dynamodb.AttributeValue{S: aws.String("BFAKEID")},
+		},
+		TableName: aws.String(provider.DynamoBuilds),
+	}).Return(&dynamodb.GetItemOutput{
+		Item: map[string]*dynamodb.AttributeValue{
+			"id": &dynamodb.AttributeValue{
+				S: aws.String("BFAKEID"),
+			},
+			"app": &dynamodb.AttributeValue{
+				S: aws.String("httpd"),
+			},
+			"manifest": &dynamodb.AttributeValue{
+				S: aws.String("web:\n  image: httpd\n  ports:\n  - 80:80\n"),
+			},
+			"release": &dynamodb.AttributeValue{
+				S: aws.String("RFAKEID"),
+			},
+			"status": &dynamodb.AttributeValue{
+				S: aws.String("complete"),
+			},
+			"created": &dynamodb.AttributeValue{
+				S: aws.String(time.Unix(1459780456, 178278576).UTC().Format("20060102.150405.000000000")),
+			},
+			"ended": &dynamodb.AttributeValue{
+				S: aws.String(time.Unix(1459780542, 440881687).UTC().Format("20060102.150405.000000000")),
+			},
+		},
+	}, nil)
+
+	provider.DynamoDB = dynamoMock
+	b, err := provider.BuildGet("httpd", "BFAKEID")
 
 	assert.Nil(t, err)
 	assert.EqualValues(t, &structs.Build{
-		Id:       "BHINCLZYYVN",
+		Id:       "BFAKEID",
 		App:      "httpd",
 		Logs:     "",
 		Manifest: "web:\n  image: httpd\n  ports:\n  - 80:80\n",
-		Release:  "RVFETUHHKKD",
+		Release:  "RFAKEID",
 		Status:   "complete",
 		Started:  time.Unix(1459780456, 178278576).UTC(),
 		Ended:    time.Unix(1459780542, 440881687).UTC(),
