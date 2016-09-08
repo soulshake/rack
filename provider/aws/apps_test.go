@@ -17,6 +17,46 @@ func init() {
 	os.Setenv("RACK", "convox")
 }
 
+var expectedHttpApp = &structs.App{
+	Name:    "httpd",
+	Release: "RFAKEID",
+	Status:  "running",
+	Outputs: map[string]string{
+		"BalancerWebHost":       "httpd-web-7E5UPCM-1241527783.us-east-1.elb.amazonaws.com",
+		"LogGroup":              "convox-httpd-LogGroup-L4V203L35WRM",
+		"RegistryId":            "132866487567",
+		"RegistryRepository":    "convox-httpd-hqvvfosgxt",
+		"Settings":              "convox-httpd-settings-139bidzalmbtu",
+		"WebPort80Balancer":     "80",
+		"WebPort80BalancerName": "httpd-web-7E5UPCM",
+	},
+	Parameters: map[string]string{
+		"WebMemory":              "256",
+		"WebCpu":                 "256",
+		"Release":                "RFAKEID",
+		"Subnets":                "subnet-13de3139,subnet-b5578fc3,subnet-21c13379",
+		"Internal":               "No",
+		"WebPort80ProxyProtocol": "No",
+		"VPC":                  "vpc-f8006b9c",
+		"Cluster":              "convox-Cluster-1E4XJ0PQWNAYS",
+		"Key":                  "arn:aws:kms:us-east-1:132866487567:key/d9f38426-9017-4931-84f8-604ad1524920",
+		"Repository":           "",
+		"WebPort80Balancer":    "80",
+		"Environment":          "https://convox-httpd-settings-139bidzalmbtu.s3.amazonaws.com/releases/RFAKEID/env",
+		"WebPort80Certificate": "",
+		"WebPort80Host":        "56694",
+		"WebDesiredCount":      "1",
+		"WebPort80Secure":      "No",
+		"Version":              "20160330143438",
+	},
+	Tags: map[string]string{
+		"Name":   "httpd",
+		"Type":   "app",
+		"System": "convox",
+		"Rack":   "convox",
+	},
+}
+
 func TestAppGet(t *testing.T) {
 	provider := StubAwsProvider()
 	defer provider.Close()
@@ -24,49 +64,21 @@ func TestAppGet(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	expectedApp := &structs.App{
-		Name:    "httpd",
-		Release: "RFUJGNCWNZS",
-		Status:  "running",
-		Outputs: map[string]string{
-			"BalancerWebHost":       "httpd-web-7E5UPCM-1241527783.us-east-1.elb.amazonaws.com",
-			"LogGroup":              "convox-httpd-LogGroup-L4V203L35WRM",
-			"RegistryId":            "132866487567",
-			"RegistryRepository":    "convox-httpd-hqvvfosgxt",
-			"Settings":              "convox-httpd-settings-139bidzalmbtu",
-			"WebPort80Balancer":     "80",
-			"WebPort80BalancerName": "httpd-web-7E5UPCM",
-		},
-		Parameters: map[string]string{
-			"WebMemory":              "256",
-			"WebCpu":                 "256",
-			"Release":                "RFUJGNCWNZS",
-			"Subnets":                "subnet-13de3139,subnet-b5578fc3,subnet-21c13379",
-			"Internal":               "No",
-			"WebPort80ProxyProtocol": "No",
-			"VPC":                  "vpc-f8006b9c",
-			"Cluster":              "convox-Cluster-1E4XJ0PQWNAYS",
-			"Key":                  "arn:aws:kms:us-east-1:132866487567:key/d9f38426-9017-4931-84f8-604ad1524920",
-			"Repository":           "",
-			"WebPort80Balancer":    "80",
-			"Environment":          "https://convox-httpd-settings-139bidzalmbtu.s3.amazonaws.com/releases/RFUJGNCWNZS/env",
-			"WebPort80Certificate": "",
-			"WebPort80Host":        "56694",
-			"WebDesiredCount":      "1",
-			"WebPort80Secure":      "No",
-			"Version":              "20160330143438",
-		},
-		Tags: map[string]string{
-			"Name":   "httpd",
-			"Type":   "app",
-			"System": "convox",
-			"Rack":   "convox",
-		},
-	}
+	cfMock := createHttpdStackMock(mockCtrl, provider.Rack)
+
+	provider.CloudFormation = cfMock
+
+	a, err := provider.AppGet("httpd")
+
+	assert.Nil(t, err)
+	assert.EqualValues(t, expectedHttpApp, a)
+}
+
+func createHttpdStackMock(mockCtrl *gomock.Controller, rack string) *mocks.MockCloudFormationAPI {
 
 	cfMock := mocks.NewMockCloudFormationAPI(mockCtrl)
 	cfMock.EXPECT().DescribeStacks(&cloudformation.DescribeStacksInput{
-		StackName: aws.String(provider.Rack + "-" + "httpd"),
+		StackName: aws.String(rack + "-" + "httpd"),
 	}).Return(&cloudformation.DescribeStacksOutput{
 		Stacks: []*cloudformation.Stack{
 			&cloudformation.Stack{
@@ -93,7 +105,7 @@ func TestAppGet(t *testing.T) {
 				Parameters: []*cloudformation.Parameter{
 					&cloudformation.Parameter{
 						ParameterKey:   aws.String("Release"),
-						ParameterValue: aws.String("RFUJGNCWNZS"),
+						ParameterValue: aws.String("RFAKEID"),
 					},
 					&cloudformation.Parameter{
 						ParameterKey:   aws.String("Internal"),
@@ -137,7 +149,7 @@ func TestAppGet(t *testing.T) {
 					},
 					&cloudformation.Parameter{
 						ParameterKey:   aws.String("Environment"),
-						ParameterValue: aws.String("https://convox-httpd-settings-139bidzalmbtu.s3.amazonaws.com/releases/RFUJGNCWNZS/env"),
+						ParameterValue: aws.String("https://convox-httpd-settings-139bidzalmbtu.s3.amazonaws.com/releases/RFAKEID/env"),
 					},
 					&cloudformation.Parameter{
 						ParameterKey:   aws.String("WebPort80Certificate"),
@@ -194,10 +206,5 @@ func TestAppGet(t *testing.T) {
 		},
 	}, nil)
 
-	provider.CloudFormation = cfMock
-
-	a, err := provider.AppGet("httpd")
-
-	assert.Nil(t, err)
-	assert.EqualValues(t, expectedApp, a)
+	return cfMock
 }

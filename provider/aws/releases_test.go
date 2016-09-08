@@ -12,7 +12,7 @@ import (
 
 func TestReleaseGet(t *testing.T) {
 	provider := StubAwsProvider(
-		describeStacksCycle,
+		//describeStacksCycle,
 
 		release1GetItemCycle,
 	)
@@ -33,9 +33,9 @@ func TestReleaseGet(t *testing.T) {
 
 func TestReleaseList(t *testing.T) {
 	provider := StubAwsProvider(
-		describeStacksCycle,
+	//describeStacksCycle,
 
-		releasesQueryCycle,
+	//releasesQueryCycle,
 	)
 	defer provider.Close()
 
