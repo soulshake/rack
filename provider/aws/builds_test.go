@@ -27,7 +27,7 @@ var expectedBuild1 = &structs.Build{
 	Id:       "BFAKEID",
 	App:      "httpd",
 	Logs:     "",
-	Manifest: "web:\n  image: httpd\n  ports:\n  - 80:80\n",
+	Manifest: "version: \"2\"\nservices:\n  web:\n    build: {}\n    command: null\n    image: httpd\n    ports:\n    - 80:80\n",
 	Release:  "RFAKEID",
 	Status:   "complete",
 	Started:  time.Unix(1459780456, 178278576).UTC(),
@@ -131,7 +131,7 @@ func createDynamoGetItemMock(mockCtrl *gomock.Controller, table string) *mocks.M
 				S: aws.String("httpd"),
 			},
 			"manifest": &dynamodb.AttributeValue{
-				S: aws.String("web:\n  image: httpd\n  ports:\n  - 80:80\n"),
+				S: aws.String("version: \"2\"\nservices:\n  web:\n    build: {}\n    command: null\n    image: httpd\n    ports:\n    - 80:80\n"),
 			},
 			"release": &dynamodb.AttributeValue{
 				S: aws.String("RFAKEID"),
