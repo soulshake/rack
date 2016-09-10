@@ -3,281 +3,130 @@ package aws_test
 import (
 	"testing"
 
-	"github.com/convox/rack/api/awsutil"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/convox/rack/api/structs"
+	"github.com/convox/rack/provider/aws/mocks"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCapacityGet(t *testing.T) {
-	provider := StubAwsProvider(
-		cycleCapacityListContainerInstances,
-		cycleCapacityDescribeContainerInstances,
-		cycleCapacityListServices,
-		cycleCapacityDescribeServices,
-		cycleCapacityDescribeTaskDefinition2,
-		cycleCapacityDescribeTaskDefinition1,
-		cycleCapacityDescribeTaskDefinition1,
-	)
+	provider := StubAwsProvider()
 	defer provider.Close()
 
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	ecsMock := createClusterServciesMock(mockCtrl)
+
+	ecsMock.EXPECT().DescribeTaskDefinition(&ecs.DescribeTaskDefinitionInput{
+		TaskDefinition: aws.String("task-def-1"),
+	}).Return(&ecs.DescribeTaskDefinitionOutput{
+		TaskDefinition: &ecs.TaskDefinition{
+			ContainerDefinitions: []*ecs.ContainerDefinition{
+				&ecs.ContainerDefinition{
+					Name: aws.String("container-1"),
+					PortMappings: []*ecs.PortMapping{
+						&ecs.PortMapping{
+							ContainerPort: aws.Int64(8080),
+							HostPort:      aws.Int64(9000),
+						},
+					},
+					Cpu:    aws.Int64(1024),
+					Memory: aws.Int64(2000),
+				},
+			},
+		},
+	}, nil).Times(2)
+
+	ecsMock.EXPECT().DescribeTaskDefinition(&ecs.DescribeTaskDefinitionInput{
+		TaskDefinition: aws.String("task-def-2"),
+	}).Return(&ecs.DescribeTaskDefinitionOutput{
+		TaskDefinition: &ecs.TaskDefinition{
+			ContainerDefinitions: []*ecs.ContainerDefinition{
+				&ecs.ContainerDefinition{
+					Name: aws.String("container-2"),
+					PortMappings: []*ecs.PortMapping{
+						&ecs.PortMapping{
+							ContainerPort: aws.Int64(8080),
+							HostPort:      aws.Int64(9000),
+						},
+					},
+					Cpu:    aws.Int64(1024),
+					Memory: aws.Int64(2000),
+				},
+			},
+		},
+	}, nil).Times(2)
+
+	provider.ECS = ecsMock
 	r, err := provider.CapacityGet()
 
 	assert.Nil(t, err)
 	assert.EqualValues(t, &structs.Capacity{
 		ClusterCPU:     3072,
-		ClusterMemory:  6012,
+		ClusterMemory:  1536,
 		InstanceCPU:    1024,
-		InstanceMemory: 2004,
-		ProcessCount:   2,
-		ProcessCPU:     400,
-		ProcessMemory:  512,
-		ProcessWidth:   3,
+		InstanceMemory: 512,
+		ProcessCount:   9,
+		ProcessCPU:     9216,
+		ProcessMemory:  18000,
+		ProcessWidth:   9,
 	}, r)
 }
 
-var cycleCapacityDescribeContainerInstances = awsutil.Cycle{
-	awsutil.Request{
-		RequestURI: "/",
-		Operation:  "AmazonEC2ContainerServiceV20141113.DescribeContainerInstances",
-		Body: `{
-			"cluster":"cluster-test",
-			"containerInstances": [
-				"arn:aws:ecs:us-east-1:901416387788:container-instance/0ac4bb1c-be98-4202-a9c1-03153e91c05e",
-				"arn:aws:ecs:us-east-1:901416387788:container-instance/38a59629-6f5d-4d02-8733-fdb49500ae45",
-				"arn:aws:ecs:us-east-1:901416387788:container-instance/e7c311ae-968f-4125-8886-f9b724860d4c"
-			]
-		}`},
-	awsutil.Response{
-		StatusCode: 200,
-		Body: `{
-			"containerInstances": [
-			  {
-					"agentConnected": true,
-					"containerInstanceArn": "arn:aws:ecs:us-east-1:901416387788:container-instance/0ac4bb1c-be98-4202-a9c1-03153e91c05e",
-					"ec2InstanceId": "i-4a5513f4",
-					"pendingTasksCount": 0,
-					"registeredResources": [
-						{ "doubleValue":0.0, "integerValue":1024, "longValue":0, "name":"CPU", "type":"INTEGER" },
-						{ "doubleValue":0.0, "integerValue":2004, "longValue":0, "name":"MEMORY", "type":"INTEGER" },
-						{ "doubleValue":0.0, "integerValue":0, "longValue":0, "name":"PORTS", "stringSetValue":["22","2376","2375","51678"], "type":"STRINGSET"},
-						{ "doubleValue":0.0, "integerValue":0, "longValue":0, "name":"PORTS_UDP", "stringSetValue":[], "type":"STRINGSET"}
-					],
-					"remainingResources": [
-						{"doubleValue":0.0, "integerValue":1024, "longValue":0, "name":"CPU", "type":"INTEGER" },
-						{"doubleValue":0.0, "integerValue":2004, "longValue":0, "name":"MEMORY", "type":"INTEGER"},
-						{"doubleValue":0.0,"integerValue":0,"longValue":0,"name":"PORTS","stringSetValue":["22","2376","2375","51678"],"type":"STRINGSET"},
-						{"doubleValue":0.0,"integerValue":0,"longValue":0,"name":"PORTS_UDP","stringSetValue":[],"type":"STRINGSET"}
-					],
-					"runningTasksCount":0,
-					"status":"ACTIVE",
-					"versionInfo":{"agentHash":"4ab1051","agentVersion":"1.4.0","dockerVersion":"DockerVersion: 1.7.1"}
-				},
-			  {
-					"agentConnected": true,
-					"containerInstanceArn": "arn:aws:ecs:us-east-1:901416387788:container-instance/38a59629-6f5d-4d02-8733-fdb49500ae45",
-					"ec2InstanceId": "i-4a5513f4",
-					"pendingTasksCount": 0,
-					"registeredResources": [
-						{ "doubleValue":0.0, "integerValue":1024, "longValue":0, "name":"CPU", "type":"INTEGER" },
-						{ "doubleValue":0.0, "integerValue":2004, "longValue":0, "name":"MEMORY", "type":"INTEGER" },
-						{ "doubleValue":0.0, "integerValue":0, "longValue":0, "name":"PORTS", "stringSetValue":["22","2376","2375","51678"], "type":"STRINGSET"},
-						{ "doubleValue":0.0, "integerValue":0, "longValue":0, "name":"PORTS_UDP", "stringSetValue":[], "type":"STRINGSET"}
-					],
-					"remainingResources": [
-						{"doubleValue":0.0, "integerValue":1024, "longValue":0, "name":"CPU", "type":"INTEGER" },
-						{"doubleValue":0.0, "integerValue":2004, "longValue":0, "name":"MEMORY", "type":"INTEGER"},
-						{"doubleValue":0.0,"integerValue":0,"longValue":0,"name":"PORTS","stringSetValue":["22","2376","2375","51678"],"type":"STRINGSET"},
-						{"doubleValue":0.0,"integerValue":0,"longValue":0,"name":"PORTS_UDP","stringSetValue":[],"type":"STRINGSET"}
-					],
-					"runningTasksCount":0,
-					"status":"ACTIVE",
-					"versionInfo":{"agentHash":"4ab1051","agentVersion":"1.4.0","dockerVersion":"DockerVersion: 1.7.1"}
-				},
-			  {
-					"agentConnected": true,
-					"containerInstanceArn": "arn:aws:ecs:us-east-1:901416387788:container-instance/e7c311ae-968f-4125-8886-f9b724860d4c",
-					"ec2InstanceId": "i-4a5513f4",
-					"pendingTasksCount": 0,
-					"registeredResources": [
-						{ "doubleValue":0.0, "integerValue":1024, "longValue":0, "name":"CPU", "type":"INTEGER" },
-						{ "doubleValue":0.0, "integerValue":2004, "longValue":0, "name":"MEMORY", "type":"INTEGER" },
-						{ "doubleValue":0.0, "integerValue":0, "longValue":0, "name":"PORTS", "stringSetValue":["22","2376","2375","51678"], "type":"STRINGSET"},
-						{ "doubleValue":0.0, "integerValue":0, "longValue":0, "name":"PORTS_UDP", "stringSetValue":[], "type":"STRINGSET"}
-					],
-					"remainingResources": [
-						{"doubleValue":0.0, "integerValue":1024, "longValue":0, "name":"CPU", "type":"INTEGER" },
-						{"doubleValue":0.0, "integerValue":2004, "longValue":0, "name":"MEMORY", "type":"INTEGER"},
-						{"doubleValue":0.0,"integerValue":0,"longValue":0,"name":"PORTS","stringSetValue":["22","2376","2375","51678"],"type":"STRINGSET"},
-						{"doubleValue":0.0,"integerValue":0,"longValue":0,"name":"PORTS_UDP","stringSetValue":[],"type":"STRINGSET"}
-					],
-					"runningTasksCount":0,
-					"status":"ACTIVE",
-					"versionInfo":{"agentHash":"4ab1051","agentVersion":"1.4.0","dockerVersion":"DockerVersion: 1.7.1"}
-				}
-			]
-		}`,
-	},
-}
+func createClusterServciesMock(mockCtrl *gomock.Controller) *mocks.MockECSAPI {
 
-var cycleCapacityDescribeServices = awsutil.Cycle{
-	Request: awsutil.Request{
-		RequestURI: "/",
-		Operation:  "AmazonEC2ContainerServiceV20141113.DescribeServices",
-		Body:       `{"cluster":"cluster-test", "services":["arn:aws:ecs:us-west-2:901416387788:service/convox-test-myapp-staging-worker-SCELGCIYSKF"]}`,
-	},
-	Response: awsutil.Response{
-		StatusCode: 200,
-		Body: `{
-			"services": [
-				{
-					"status": "ACTIVE",
-					"taskDefinition": "arn:aws:ecs:us-west-2:901416387788:task-definition/convox-test-myapp-staging-worker:1",
-					"pendingCount": 0,
-					"loadBalancers": [
-							{
-									"containerName": "worker",
-									"containerPort": 80,
-									"loadBalancerName": "convox-test-myapp-staging"
-							}
-					],
-					"roleArn": "arn:aws:iam::901416387788:role/convox-test-myapp-staging-ServiceRole-1HNRHXNKGNLT9",
-					"desiredCount": 2,
-					"serviceName": "convox-test-myapp-staging-worker-SCELGCIYSKF",
-					"clusterArn": "cluster-test",
-					"serviceArn": "arn:aws:ecs:us-west-2:901416387788:service/convox-test-myapp-staging-worker-SCELGCIYSKF",
-					"deployments": [
-						{
-							"status": "ACTIVE",
-							"pendingCount": 0,
-							"createdAt": 1449511658.683,
-							"desiredCount": 2,
-							"taskDefinition": "arn:aws:ecs:us-west-2:901416387788:task-definition/convox-test-myapp-staging-worker:2",
-							"updatedAt": 1449511869.412,
-							"id": "ecs-svc/9223370587343117124",
-							"runningCount": 1
-						},
-						{
-							"status": "ACTIVE",
-							"pendingCount": 0,
-							"createdAt": 1449511658.683,
-							"desiredCount": 1,
-							"taskDefinition": "arn:aws:ecs:us-west-2:901416387788:task-definition/convox-test-myapp-staging-worker:1",
-							"updatedAt": 1449511869.412,
-							"id": "ecs-svc/9223370587343117124",
-							"runningCount": 1
-						}
-					],
-					"events": [
-						{
-							"message": "(service convox-test-myapp-staging-worker-SCELGCIYSKF) has started 1 tasks: (task f120ddee-5aa5-434e-b765-30503080078b).",
-							"id": "d84b8245-9653-453f-a449-27d7c7cfdc0a",
-							"createdAt": 1449003339.092
-						}
-					],
-					"runningCount": 1
-				}
-			],
-			"failures": []
-		}`,
-	},
-}
+	ecsMock := createECSContainerInstancesMock(mockCtrl)
 
-var cycleCapacityDescribeTaskDefinition1 = awsutil.Cycle{
-	Request: awsutil.Request{
-		RequestURI: "/",
-		Operation:  "AmazonEC2ContainerServiceV20141113.DescribeTaskDefinition",
-		Body:       `{"taskDefinition":"arn:aws:ecs:us-west-2:901416387788:task-definition/convox-test-myapp-staging-worker:1"}`,
-	},
-	Response: awsutil.Response{
-		StatusCode: 200,
-		Body: `{
-			"taskDefinition":{
-				"family":"convox-test-myapp-staging-worker",
-				"containerDefinitions":[
-					{
-						"name":"worker",
-						"cpu":200,
-						"memory":256,
-						"image":"test-image:1",
-						"environment":[{"name":"PROCESS","value":"worker"}],
-						"mountPoints":[{"sourceVolume":"worker-0-0","readOnly":false,"containerPath":"/var/run/docker.sock"}],
-						"portMappings":[{"hostPort":5000,"containerPort":80}]
-					}
-				],
-				"volumes":[
-					{"host":{"sourcePath":"/var/run/docker.sock"},"name":"convox-test-myapp-staging-0-0"}
-				]
-			}
-		}`,
-	},
-}
+	ecsMock.EXPECT().ListServices(&ecs.ListServicesInput{
+		Cluster: aws.String("cluster-test"),
+	}).Return(&ecs.ListServicesOutput{
+		ServiceArns: []*string{
+			aws.String("arn-service-1"),
+		},
+	}, nil)
 
-var cycleCapacityDescribeTaskDefinition2 = awsutil.Cycle{
-	Request: awsutil.Request{
-		RequestURI: "/",
-		Operation:  "AmazonEC2ContainerServiceV20141113.DescribeTaskDefinition",
-		Body:       `{"taskDefinition":"arn:aws:ecs:us-west-2:901416387788:task-definition/convox-test-myapp-staging-worker:2"}`,
-	},
-	Response: awsutil.Response{
-		StatusCode: 200,
-		Body: `{
-			"taskDefinition":{
-				"family":"convox-test-myapp-staging-worker",
-				"containerDefinitions":[
-					{
-						"name":"worker",
-						"cpu":200,
-						"memory":256,
-						"image":"test-image:2",
-						"environment":[{"name":"PROCESS","value":"worker"}],
-						"mountPoints":[{"sourceVolume":"worker-0-0","readOnly":false,"containerPath":"/var/run/docker.sock"}],
-						"portMappings":[{"hostPort":5000,"containerPort":80}]
-					}
-				],
-				"volumes":[
-					{"host":{"sourcePath":"/var/run/docker.sock"},"name":"convox-test-myapp-staging-0-0"}
-				]
-			}
-		}`,
-	},
-}
+	ecsMock.EXPECT().DescribeServices(&ecs.DescribeServicesInput{
+		Cluster: aws.String("cluster-test"),
+		Services: []*string{
+			aws.String("arn-service-1"),
+		},
+	}).Return(&ecs.DescribeServicesOutput{
+		Services: []*ecs.Service{
+			&ecs.Service{
+				TaskDefinition: aws.String("task-def-1"),
+				DesiredCount:   aws.Int64(5),
+				LoadBalancers: []*ecs.LoadBalancer{
+					&ecs.LoadBalancer{
+						LoadBalancerName: aws.String("elb-name"),
+						ContainerName:    aws.String("container-1"),
+						ContainerPort:    aws.Int64(8080),
+					}},
+				Deployments: []*ecs.Deployment{
+					&ecs.Deployment{
+						TaskDefinition: aws.String("task-def-1"),
+						DesiredCount:   aws.Int64(5),
+					}},
+			},
+			&ecs.Service{
+				TaskDefinition: aws.String("task-def-2"),
+				DesiredCount:   aws.Int64(4),
+				LoadBalancers: []*ecs.LoadBalancer{
+					&ecs.LoadBalancer{
+						LoadBalancerName: aws.String("elb-name"),
+						ContainerName:    aws.String("container-2"),
+						ContainerPort:    aws.Int64(8080),
+					}},
+				Deployments: []*ecs.Deployment{
+					&ecs.Deployment{
+						TaskDefinition: aws.String("task-def-2"),
+						DesiredCount:   aws.Int64(4),
+					}},
+			},
+		},
+	}, nil)
 
-var cycleCapacityListContainerInstances = awsutil.Cycle{
-	awsutil.Request{
-		RequestURI: "/",
-		Operation:  "AmazonEC2ContainerServiceV20141113.ListContainerInstances",
-		Body:       `{"cluster":"cluster-test", "nextToken":""}`,
-	},
-	awsutil.Response{
-		StatusCode: 200,
-		Body: `{
-			"containerInstanceArns":[
-				"arn:aws:ecs:us-east-1:901416387788:container-instance/0ac4bb1c-be98-4202-a9c1-03153e91c05e",
-				"arn:aws:ecs:us-east-1:901416387788:container-instance/38a59629-6f5d-4d02-8733-fdb49500ae45",
-				"arn:aws:ecs:us-east-1:901416387788:container-instance/e7c311ae-968f-4125-8886-f9b724860d4c"
-			]
-		}`,
-	},
-}
-
-var cycleCapacityListContainerInstancesBadCluster = awsutil.Cycle{
-	awsutil.Request{
-		RequestURI: "/",
-		Operation:  "AmazonEC2ContainerServiceV20141113.ListContainerInstances",
-		Body:       `{"cluster":"cluster-test","nextToken":""}`},
-	awsutil.Response{
-		StatusCode: 400,
-		Body:       `{"__type":"ClusterNotFoundException","message":"Cluster not found."}`},
-}
-
-var cycleCapacityListServices = awsutil.Cycle{
-	Request: awsutil.Request{
-		RequestURI: "/",
-		Operation:  "AmazonEC2ContainerServiceV20141113.ListServices",
-		Body:       `{"cluster":"cluster-test"}`,
-	},
-	Response: awsutil.Response{
-		StatusCode: 200,
-		Body:       `{"serviceArns":["arn:aws:ecs:us-west-2:901416387788:service/convox-test-myapp-staging-worker-SCELGCIYSKF"]}`,
-	},
+	return ecsMock
 }

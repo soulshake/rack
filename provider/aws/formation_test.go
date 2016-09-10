@@ -7,15 +7,14 @@ import (
 	"github.com/convox/rack/api/awsutil"
 	"github.com/convox/rack/api/structs"
 	"github.com/convox/rack/provider/aws"
-	"github.com/convox/rack/test"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFormationList(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacks,
-		cycleFormationDescribeStacks,
-		cycleReleaseGetItem,
+	//cycleFormationDescribeStacks,
+	//cycleFormationDescribeStacks,
+	//cycleReleaseGetItem,
 	)
 	defer provider.Close()
 
@@ -36,7 +35,7 @@ func TestFormationList(t *testing.T) {
 
 func TestFormationListBadApp(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleDescribeStacksNotFound("convox-httpe"),
+	//cycleDescribeStacksNotFound("convox-httpe"),
 	)
 	defer provider.Close()
 
@@ -48,7 +47,7 @@ func TestFormationListBadApp(t *testing.T) {
 
 func TestFormationListEmptyRelease(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacksEmptyRelease,
+	//cycleFormationDescribeStacksEmptyRelease,
 	)
 	defer provider.Close()
 
@@ -60,9 +59,9 @@ func TestFormationListEmptyRelease(t *testing.T) {
 
 func TestFormationListBadRelease(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacks,
-		cycleFormationDescribeStacks,
-		cycleReleaseGetItemNotFound,
+	//cycleFormationDescribeStacks,
+	//cycleFormationDescribeStacks,
+	//cycleReleaseGetItemNotFound,
 	)
 	defer provider.Close()
 
@@ -74,9 +73,9 @@ func TestFormationListBadRelease(t *testing.T) {
 
 func TestFormationListBadManifest(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacks,
-		cycleFormationDescribeStacks,
-		cycleReleaseGetItemBadManifest,
+	//cycleFormationDescribeStacks,
+	//cycleFormationDescribeStacks,
+	//cycleReleaseGetItemBadManifest,
 	)
 	defer provider.Close()
 
@@ -88,9 +87,9 @@ func TestFormationListBadManifest(t *testing.T) {
 
 func TestFormationListBadFormation(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacksBadFormation,
-		cycleFormationDescribeStacksBadFormation,
-		cycleReleaseGetItem,
+	//cycleFormationDescribeStacksBadFormation,
+	//cycleFormationDescribeStacksBadFormation,
+	//cycleReleaseGetItem,
 	)
 	defer provider.Close()
 
@@ -102,9 +101,9 @@ func TestFormationListBadFormation(t *testing.T) {
 
 func TestFormationGet(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacks,
-		cycleFormationDescribeStacks,
-		cycleReleaseGetItem,
+	//cycleFormationDescribeStacks,
+	//cycleFormationDescribeStacks,
+	//cycleReleaseGetItem,
 	)
 	defer provider.Close()
 
@@ -123,7 +122,7 @@ func TestFormationGet(t *testing.T) {
 
 func TestFormationGetBadApp(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleDescribeStacksNotFound("convox-httpe"),
+	//cycleDescribeStacksNotFound("convox-httpe"),
 	)
 	defer provider.Close()
 
@@ -135,7 +134,7 @@ func TestFormationGetBadApp(t *testing.T) {
 
 func TestFormationGetEmptyRelease(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacksEmptyRelease,
+	//cycleFormationDescribeStacksEmptyRelease,
 	)
 	defer provider.Close()
 
@@ -147,9 +146,9 @@ func TestFormationGetEmptyRelease(t *testing.T) {
 
 func TestFormationGetBadRelease(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacks,
-		cycleFormationDescribeStacks,
-		cycleReleaseGetItemNotFound,
+	//cycleFormationDescribeStacks,
+	//cycleFormationDescribeStacks,
+	//cycleReleaseGetItemNotFound,
 	)
 	defer provider.Close()
 
@@ -161,9 +160,9 @@ func TestFormationGetBadRelease(t *testing.T) {
 
 func TestFormationGetBadManifest(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacks,
-		cycleFormationDescribeStacks,
-		cycleReleaseGetItemBadManifest,
+	//cycleFormationDescribeStacks,
+	//cycleFormationDescribeStacks,
+	//cycleReleaseGetItemBadManifest,
 	)
 	defer provider.Close()
 
@@ -175,9 +174,9 @@ func TestFormationGetBadManifest(t *testing.T) {
 
 func TestFormationGetUnknownProcess(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacks,
-		cycleFormationDescribeStacks,
-		cycleReleaseGetItem,
+	//cycleFormationDescribeStacks,
+	//cycleFormationDescribeStacks,
+	//cycleReleaseGetItem,
 	)
 	defer provider.Close()
 
@@ -189,17 +188,17 @@ func TestFormationGetUnknownProcess(t *testing.T) {
 
 func TestFormationSave(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacks,
-		cycleCapacityListContainerInstances,
-		cycleCapacityDescribeContainerInstances,
-		cycleCapacityListServices,
-		cycleCapacityDescribeServices,
-		cycleCapacityDescribeTaskDefinition2,
-		cycleCapacityDescribeTaskDefinition1,
-		cycleCapacityDescribeTaskDefinition1,
-		cycleNotificationPublish,
-		test.DescribeAppStackCycle("convox-httpd"),
-		cycleFormationUpdateStack,
+	//cycleFormationDescribeStacks,
+	//cycleCapacityListContainerInstances,
+	//cycleCapacityDescribeContainerInstances,
+	//cycleCapacityListServices,
+	//cycleCapacityDescribeServices,
+	//cycleCapacityDescribeTaskDefinition2,
+	//cycleCapacityDescribeTaskDefinition1,
+	//cycleCapacityDescribeTaskDefinition1,
+	//cycleNotificationPublish,
+	//test.DescribeAppStackCycle("convox-httpd"),
+	//cycleFormationUpdateStack,
 	)
 	defer provider.Close()
 
@@ -217,7 +216,7 @@ func TestFormationSave(t *testing.T) {
 
 func TestFormationSaveBadApp(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleDescribeStacksNotFound("convox-httpe"),
+	//cycleDescribeStacksNotFound("convox-httpe"),
 	)
 	defer provider.Close()
 
@@ -235,8 +234,8 @@ func TestFormationSaveBadApp(t *testing.T) {
 
 func TestFormationSaveBadCluster(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacks,
-		cycleCapacityListContainerInstancesBadCluster,
+	//cycleFormationDescribeStacks,
+	//cycleCapacityListContainerInstancesBadCluster,
 	)
 	defer provider.Close()
 
@@ -254,14 +253,14 @@ func TestFormationSaveBadCluster(t *testing.T) {
 
 func TestFormationSaveBadCount(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacks,
-		cycleCapacityListContainerInstances,
-		cycleCapacityDescribeContainerInstances,
-		cycleCapacityListServices,
-		cycleCapacityDescribeServices,
-		cycleCapacityDescribeTaskDefinition2,
-		cycleCapacityDescribeTaskDefinition1,
-		cycleCapacityDescribeTaskDefinition1,
+	//cycleFormationDescribeStacks,
+	//cycleCapacityListContainerInstances,
+	//cycleCapacityDescribeContainerInstances,
+	//cycleCapacityListServices,
+	//cycleCapacityDescribeServices,
+	//cycleCapacityDescribeTaskDefinition2,
+	//cycleCapacityDescribeTaskDefinition1,
+	//cycleCapacityDescribeTaskDefinition1,
 	)
 	defer provider.Close()
 
@@ -277,14 +276,14 @@ func TestFormationSaveBadCount(t *testing.T) {
 
 func TestFormationSaveCpuTooSmall(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacks,
-		cycleCapacityListContainerInstances,
-		cycleCapacityDescribeContainerInstances,
-		cycleCapacityListServices,
-		cycleCapacityDescribeServices,
-		cycleCapacityDescribeTaskDefinition2,
-		cycleCapacityDescribeTaskDefinition1,
-		cycleCapacityDescribeTaskDefinition1,
+	//cycleFormationDescribeStacks,
+	//cycleCapacityListContainerInstances,
+	//cycleCapacityDescribeContainerInstances,
+	//cycleCapacityListServices,
+	//cycleCapacityDescribeServices,
+	//cycleCapacityDescribeTaskDefinition2,
+	//cycleCapacityDescribeTaskDefinition1,
+	//cycleCapacityDescribeTaskDefinition1,
 	)
 	defer provider.Close()
 
@@ -300,14 +299,14 @@ func TestFormationSaveCpuTooSmall(t *testing.T) {
 
 func TestFormationSaveCpuTooLarge(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacks,
-		cycleCapacityListContainerInstances,
-		cycleCapacityDescribeContainerInstances,
-		cycleCapacityListServices,
-		cycleCapacityDescribeServices,
-		cycleCapacityDescribeTaskDefinition2,
-		cycleCapacityDescribeTaskDefinition1,
-		cycleCapacityDescribeTaskDefinition1,
+	//cycleFormationDescribeStacks,
+	//cycleCapacityListContainerInstances,
+	//cycleCapacityDescribeContainerInstances,
+	//cycleCapacityListServices,
+	//cycleCapacityDescribeServices,
+	//cycleCapacityDescribeTaskDefinition2,
+	//cycleCapacityDescribeTaskDefinition1,
+	//cycleCapacityDescribeTaskDefinition1,
 	)
 	defer provider.Close()
 
@@ -323,14 +322,14 @@ func TestFormationSaveCpuTooLarge(t *testing.T) {
 
 func TestFormationSaveMemoryTooLarge(t *testing.T) {
 	provider := StubAwsProvider(
-		cycleFormationDescribeStacks,
-		cycleCapacityListContainerInstances,
-		cycleCapacityDescribeContainerInstances,
-		cycleCapacityListServices,
-		cycleCapacityDescribeServices,
-		cycleCapacityDescribeTaskDefinition2,
-		cycleCapacityDescribeTaskDefinition1,
-		cycleCapacityDescribeTaskDefinition1,
+	//cycleFormationDescribeStacks,
+	//cycleCapacityListContainerInstances,
+	//cycleCapacityDescribeContainerInstances,
+	//cycleCapacityListServices,
+	//cycleCapacityDescribeServices,
+	//cycleCapacityDescribeTaskDefinition2,
+	//cycleCapacityDescribeTaskDefinition1,
+	//cycleCapacityDescribeTaskDefinition1,
 	)
 	defer provider.Close()
 

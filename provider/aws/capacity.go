@@ -66,15 +66,13 @@ func (p *AWSProvider) CapacityGet() (*structs.Capacity, error) {
 			}
 		}
 
-		res, err := p.ECS.DescribeTaskDefinition(&ecs.DescribeTaskDefinitionInput{
-			TaskDefinition: service.TaskDefinition,
-		})
+		res, err := p.describeTaskDefinition(*service.TaskDefinition)
 		if err != nil {
 			log.Error(err)
 			return nil, err
 		}
 
-		for _, cd := range res.TaskDefinition.ContainerDefinitions {
+		for _, cd := range res.ContainerDefinitions {
 			capacity.ProcessCount += *service.DesiredCount
 			capacity.ProcessMemory += (*service.DesiredCount * *cd.Memory)
 			capacity.ProcessCPU += (*service.DesiredCount * *cd.Cpu)

@@ -102,9 +102,8 @@ var ec2Instances = structs.Instances{
 	ec2Instance3,
 }
 
-// createECSMock creates a standard generic mock struct for ECS.
-// Expected ECS calls may not be called and order is not enforced.
-func createECSMock(mockCtrl *gomock.Controller) *mocks.MockECSAPI {
+// createECSContainerInstancesMock creates a standard generic mock struct for ECS.
+func createECSContainerInstancesMock(mockCtrl *gomock.Controller) *mocks.MockECSAPI {
 
 	ecsMock := mocks.NewMockECSAPI(mockCtrl)
 	ecsMock.EXPECT().ListContainerInstances(&ecs.ListContainerInstancesInput{
@@ -128,25 +127,52 @@ func createECSMock(mockCtrl *gomock.Controller) *mocks.MockECSAPI {
 	}).Return(&ecs.DescribeContainerInstancesOutput{
 		ContainerInstances: []*ecs.ContainerInstance{
 			&ecs.ContainerInstance{
-				AgentConnected:      awsgo.Bool(ec2Instance1.Agent),
-				Ec2InstanceId:       awsgo.String(ec2Instance1.Id),
-				Status:              awsgo.String(ec2Instance1.Status),
-				RegisteredResources: []*ecs.Resource{},
-				RemainingResources:  []*ecs.Resource{},
+				AgentConnected: awsgo.Bool(ec2Instance1.Agent),
+				Ec2InstanceId:  awsgo.String(ec2Instance1.Id),
+				Status:         awsgo.String(ec2Instance1.Status),
+				RegisteredResources: []*ecs.Resource{
+					&ecs.Resource{
+						Name:         awsgo.String("MEMORY"),
+						IntegerValue: awsgo.Int64(512),
+					},
+					&ecs.Resource{
+						Name:         awsgo.String("CPU"),
+						IntegerValue: awsgo.Int64(1024),
+					},
+				},
+				RemainingResources: []*ecs.Resource{},
 			},
 			&ecs.ContainerInstance{
-				AgentConnected:      awsgo.Bool(ec2Instance2.Agent),
-				Ec2InstanceId:       awsgo.String(ec2Instance2.Id),
-				Status:              awsgo.String(ec2Instance2.Status),
-				RegisteredResources: []*ecs.Resource{},
-				RemainingResources:  []*ecs.Resource{},
+				AgentConnected: awsgo.Bool(ec2Instance2.Agent),
+				Ec2InstanceId:  awsgo.String(ec2Instance2.Id),
+				Status:         awsgo.String(ec2Instance2.Status),
+				RegisteredResources: []*ecs.Resource{
+					&ecs.Resource{
+						Name:         awsgo.String("MEMORY"),
+						IntegerValue: awsgo.Int64(512),
+					},
+					&ecs.Resource{
+						Name:         awsgo.String("CPU"),
+						IntegerValue: awsgo.Int64(1024),
+					},
+				},
+				RemainingResources: []*ecs.Resource{},
 			},
 			&ecs.ContainerInstance{
-				AgentConnected:      awsgo.Bool(ec2Instance3.Agent),
-				Ec2InstanceId:       awsgo.String(ec2Instance3.Id),
-				Status:              awsgo.String(ec2Instance3.Status),
-				RegisteredResources: []*ecs.Resource{},
-				RemainingResources:  []*ecs.Resource{},
+				AgentConnected: awsgo.Bool(ec2Instance3.Agent),
+				Ec2InstanceId:  awsgo.String(ec2Instance3.Id),
+				Status:         awsgo.String(ec2Instance3.Status),
+				RegisteredResources: []*ecs.Resource{
+					&ecs.Resource{
+						Name:         awsgo.String("MEMORY"),
+						IntegerValue: awsgo.Int64(512),
+					},
+					&ecs.Resource{
+						Name:         awsgo.String("CPU"),
+						IntegerValue: awsgo.Int64(1024),
+					},
+				},
+				RemainingResources: []*ecs.Resource{},
 			},
 		},
 	}, nil)

@@ -16,7 +16,7 @@ func TestInstancesList(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	provider.EC2 = createEC2Mock(mockCtrl)
-	provider.ECS = createECSMock(mockCtrl)
+	provider.ECS = createECSContainerInstancesMock(mockCtrl)
 
 	is, err := provider.InstanceList()
 
