@@ -56,7 +56,7 @@ func TestBuildDelete(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	provider.DynamoDB = createGetDeleteBuildMock(mockCtrl)
-	provider.CloudFormation = createHttpdStackMock(mockCtrl, provider.Rack)
+	provider.CloudFormation = createAppStackMock(mockCtrl, provider.Rack)
 	provider.ECR = createECRMock(mockCtrl)
 
 	b, err := provider.BuildDelete("httpd", "BFAKEID")
@@ -73,6 +73,48 @@ func TestBuildList(t *testing.T) {
 	)
 	defer provider.Close()
 
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	cfMock := createAppStackMock(mockCtrl, provider.Rack)
+	dynamoMock := mocks.NewMockDynamoDBAPI(mockCtrl)
+
+	dynamoMock.EXPECT().Query(&dynamodb.QueryInput{
+		KeyConditions: map[string]*dynamodb.Condition{
+			"app": &dynamodb.Condition{
+				AttributeValueList: []*dynamodb.AttributeValue{&dynamodb.AttributeValue{S: aws.String("httpd")}},
+				ComparisonOperator: aws.String("EQ"),
+			},
+		},
+		IndexName:        aws.String("app.created"),
+		Limit:            aws.Int64(20),
+		ScanIndexForward: aws.Bool(false),
+		TableName:        aws.String(provider.DynamoBuilds),
+	}).Return(&dynamodb.QueryOutput{
+		Items: []map[string]*dynamodb.AttributeValue{
+			map[string]*dynamodb.AttributeValue{
+				"app":      &dynamodb.AttributeValue{S: aws.String("httpd")},
+				"id":       &dynamodb.AttributeValue{S: aws.String("BHINCLZYYVN")},
+				"manifest": &dynamodb.AttributeValue{S: aws.String("web:\n  image: httpd\n  ports:\n  - 80:80\n")},
+				"release":  &dynamodb.AttributeValue{S: aws.String("RVFETUHHKKD")},
+				"status":   &dynamodb.AttributeValue{S: aws.String("complete")},
+				"created":  &dynamodb.AttributeValue{S: aws.String(time.Unix(1459780456, 178278576).UTC().Format(sortableTime))},
+				"ended":    &dynamodb.AttributeValue{S: aws.String(time.Unix(1459780542, 440881687).UTC().Format(sortableTime))},
+			},
+			map[string]*dynamodb.AttributeValue{
+				"app":      &dynamodb.AttributeValue{S: aws.String("httpd")},
+				"id":       &dynamodb.AttributeValue{S: aws.String("BNOARQMVHUO")},
+				"manifest": &dynamodb.AttributeValue{S: aws.String("web:\n  image: httpd\n  ports:\n  - 80:80\n")},
+				"release":  &dynamodb.AttributeValue{S: aws.String("RFVZFLKVTYO")},
+				"status":   &dynamodb.AttributeValue{S: aws.String("complete")},
+				"created":  &dynamodb.AttributeValue{S: aws.String(time.Unix(1459709087, 472025215).UTC().Format(sortableTime))},
+				"ended":    &dynamodb.AttributeValue{S: aws.String(time.Unix(1459709198, 984281955).UTC().Format(sortableTime))},
+			},
+		},
+	}, nil)
+
+	provider.CloudFormation = cfMock
+	provider.DynamoDB = dynamoMock
 	b, err := provider.BuildList("httpd", 20)
 
 	assert.Nil(t, err)

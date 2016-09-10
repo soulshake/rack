@@ -16,6 +16,8 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
+var sortableTime = "20060102.150405.000000000"
+
 func init() {
 	logger.Output = &bytes.Buffer{}
 }

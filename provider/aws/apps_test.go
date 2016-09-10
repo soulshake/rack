@@ -64,7 +64,7 @@ func TestAppGet(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	cfMock := createHttpdStackMock(mockCtrl, provider.Rack)
+	cfMock := createAppStackMock(mockCtrl, provider.Rack)
 
 	provider.CloudFormation = cfMock
 
@@ -74,7 +74,7 @@ func TestAppGet(t *testing.T) {
 	assert.EqualValues(t, expectedHttpApp, a)
 }
 
-func createHttpdStackMock(mockCtrl *gomock.Controller, rack string) *mocks.MockCloudFormationAPI {
+func createAppStackMock(mockCtrl *gomock.Controller, rack string) *mocks.MockCloudFormationAPI {
 
 	cfMock := mocks.NewMockCloudFormationAPI(mockCtrl)
 	cfMock.EXPECT().DescribeStacks(&cloudformation.DescribeStacksInput{
