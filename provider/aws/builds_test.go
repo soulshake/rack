@@ -1,14 +1,15 @@
 package aws_test
 
 import (
-	"os"
+	"io/ioutil"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/convox/rack/api/models"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/convox/rack/api/structs"
 	"github.com/convox/rack/provider/aws/mocks"
 	"github.com/golang/mock/gomock"
@@ -17,10 +18,10 @@ import (
 )
 
 func init() {
-	os.Setenv("RACK", "convox")
-	os.Setenv("DYNAMO_BUILDS", "convox-builds")
-	os.Setenv("DYNAMO_RELEASES", "convox-releases")
-	models.PauseNotifications = true
+	//os.Setenv("RACK", "convox")
+	//os.Setenv("DYNAMO_BUILDS", "convox-builds")
+	//os.Setenv("DYNAMO_RELEASES", "convox-releases")
+	//models.PauseNotifications = true
 }
 
 var expectedBuild1 = &structs.Build{
@@ -66,11 +67,7 @@ func TestBuildDelete(t *testing.T) {
 }
 
 func TestBuildList(t *testing.T) {
-	provider := StubAwsProvider(
-	//describeStacksCycle,
-	//build1GetObjectCycle,
-	//build2GetObjectCycle,
-	)
+	provider := StubAwsProvider()
 	defer provider.Close()
 
 	mockCtrl := gomock.NewController(t)
@@ -143,12 +140,25 @@ func TestBuildList(t *testing.T) {
 }
 
 func TestBuildLogs(t *testing.T) {
-	provider := StubAwsProvider(
-	//describeStacksCycle,
-	//build1GetObjectCycle,
-	)
+	provider := StubAwsProvider()
 	defer provider.Close()
 
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	cfMock := createAppStackMock(mockCtrl, provider.Rack)
+
+	body := ioutil.NopCloser(strings.NewReader("RUNNING: docker pull httpd"))
+	s3Mock := mocks.NewMockS3API(mockCtrl)
+	s3Mock.EXPECT().GetObject(&s3.GetObjectInput{
+		Bucket: aws.String("convox-httpd-settings-139bidzalmbtu"),
+		Key:    aws.String("builds/BHINCLZYYVN.log"),
+	}).Return(&s3.GetObjectOutput{
+		Body: body,
+	}, nil)
+
+	provider.CloudFormation = cfMock
+	provider.S3 = s3Mock
 	l, err := provider.BuildLogs("httpd", "BHINCLZYYVN")
 
 	assert.Nil(t, err)
@@ -206,7 +216,7 @@ func createGetDeleteBuildMock(mockCtrl *gomock.Controller) *mocks.MockDynamoDBAP
 	return dynamoMock
 }
 
-// this should go somewhere else
+// TODO: this should go somewhere else
 func createECRMock(mockCtrl *gomock.Controller) *mocks.MockECRAPI {
 
 	ecrMock := mocks.NewMockECRAPI(mockCtrl)
