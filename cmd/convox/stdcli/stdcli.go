@@ -14,6 +14,10 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/segmentio/analytics-go"
 	"github.com/stvp/rollbar"
+
+    "github.com/spf13/cobra"
+    //"github.com/spf13/cobra/doc"
+
 )
 
 var (
@@ -25,6 +29,7 @@ var (
 	Querier    func(bin string, args ...string) ([]byte, error)
 	Spinner    *spinner.Spinner
 	Tagger     func() string
+    root_cmd   *cobra.Command
 )
 
 func init() {
@@ -35,6 +40,7 @@ func init() {
 	Runner = runExecCommand
 	Spinner = spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	Tagger = tagTimeUnix
+	root_cmd = &cobra.Command{Use: "convox"}
 
 	cli.AppHelpTemplate = `{{.Name}}: {{.Usage}}
 
@@ -78,6 +84,7 @@ Options:
 
 func New() *cli.App {
 	app := cli.NewApp()
+	app.Usage = "Convox: Free up your team"
 
 	app.EnableBashCompletion = true
 
@@ -152,6 +159,12 @@ func ReadSetting(setting string) string {
 
 func RegisterCommand(cmd cli.Command) {
 	Commands = append(Commands, cmd)
+	cobraCmd := &cobra.Command{
+        Use: cmd.Description,
+		Short: cmd.Name,
+    }
+    root_cmd.AddCommand(cobraCmd)
+
 }
 
 func Run(bin string, args ...string) error {
