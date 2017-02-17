@@ -151,7 +151,7 @@ func cmdBuilds(c *cli.Context) error {
 
 	builds, err := rackClient(c).GetBuilds(app)
 	if err != nil {
-		return stdcli.Error(err)
+		return stdcli.Errorf(stdcli.Sprintf(err.Error()))
 	}
 
 	t := stdcli.NewTable("ID", "STATUS", "RELEASE", "STARTED", "ELAPSED", "DESC")

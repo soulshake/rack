@@ -47,7 +47,7 @@ func cmdLogsStream(c *cli.Context) error {
 
 	err = rackClient(c).StreamAppLogs(app, c.String("filter"), c.BoolT("follow"), c.Duration("since"), os.Stdout)
 	if err != nil {
-		return stdcli.Error(err)
+		return stdcli.Errorf(stdcli.Sprintf(err.Error()))
 	}
 	return nil
 }

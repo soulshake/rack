@@ -3,6 +3,7 @@ package stdcli
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"regexp"
 )
@@ -33,6 +34,7 @@ func init() {
 			"start":  RenderAttributes(247),
 			"wait":   RenderAttributes(228),
 			"warn":   RenderAttributes(208),
+			"app":    RenderAttributes(228),
 		},
 	}
 }
@@ -90,6 +92,7 @@ func (w *Writer) OK() (int, error) {
 }
 
 func (w *Writer) Sprintf(format string, args ...interface{}) string {
+	log.Panic(format)
 	return fmt.Sprintf(w.renderTags(format), args...)
 }
 
