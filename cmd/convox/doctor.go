@@ -282,7 +282,7 @@ func checkDockerPull() error {
 	title := "Docker pull hello-world works"
 	startCheck(title)
 
-	dockerTest := exec.Command("docker", "pull", "hello-world")
+	dockerTest := exec.Command(dockerBin, "pull", "hello-world")
 	err := dockerTest.Run()
 	if err != nil {
 		diagnose(Diagnosis{
@@ -521,7 +521,7 @@ func checkBuildDocker() error {
 
 	startCheck(title)
 
-	byts, err := exec.Command("docker", "build", ".").CombinedOutput()
+	byts, err := exec.Command(dockerBin, "build", ".").CombinedOutput()
 	if err != nil {
 		bytsArr := strings.Split(string(byts), "\n")
 		message := ""

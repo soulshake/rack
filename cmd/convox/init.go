@@ -175,7 +175,7 @@ func initApplication(dir string) (string, error) {
 }
 
 func updateInit() error {
-	cmd := exec.Command("docker", "pull", "convox/init")
+	cmd := exec.Command(dockerBin, "pull", "convox/init")
 	return cmd.Run()
 }
 

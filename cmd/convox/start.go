@@ -210,7 +210,7 @@ func handleInterrupt(run manifest.Run) {
 }
 
 func dockerTest() error {
-	dockerTest := exec.Command("docker", "images")
+	dockerTest := exec.Command(dockerBin, "images")
 	err := dockerTest.Run()
 	if err != nil {
 		return errors.New("could not connect to docker daemon, is it installed and running?")

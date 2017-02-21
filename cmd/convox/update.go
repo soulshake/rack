@@ -99,6 +99,6 @@ func updateClient() (*http.Client, error) {
 }
 
 func updateProxy() error {
-	cmd := exec.Command("docker", "pull", "convox/proxy")
+	cmd := exec.Command(dockerBin, "pull", "convox/proxy")
 	return cmd.Run()
 }
