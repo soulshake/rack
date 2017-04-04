@@ -30,6 +30,9 @@
 
 PROG=${PROG:=$(basename "${BASH_SOURCE}")}
 
+__convox_previous_extglob_setting=$(shopt -p extglob)
+shopt -s extglob
+
 _cli_bash_autocomplete() {
      local cur opts base
      COMPREPLY=()
@@ -120,9 +123,6 @@ __convox_nospace() {
 	type compopt &>/dev/null && compopt -o nospace
 }
 
-__convox_previous_extglob_setting=$(shopt -p extglob)
-shopt -s extglob
-
 __convox_q(){
     convox 2>/dev/null "$@"
 }
@@ -151,11 +151,6 @@ __convox_to_extglob() {
 ###########################
 ### DYNAMIC COMPLETIONS ###
 ###########################
-
-__convox_apps() {
-    read -d " " rack_flag rack <<< $(__convox_rack_flag)
-    __convox_q apps $rack_flag $rack
-}
 
 __convox_complete_api_endpoints() {
     COMPREPLY=( $( compgen -W "$(__convox_api_endpoints)" -- "$cur" ) )
@@ -230,21 +225,9 @@ __convox_complete_env_vars() {
     COMPREPLY=( $( _env_vars -- "\$$cur" ) )
 }
 
-__convox_releases() {
-    read -d " " rack_flag rack app_flag app <<< $(__convox_rack_and_app_flags)
-    builds="$(__convox_q $rack_flag $rack $app_flag $app releases | grep -v STATUS | awk '{ print $1 }')"
-    echo "$builds"
-}
-
 __convox_complete_releases() {
     releases="$(__convox_releases)"
     COMPREPLY=( $(compgen -W "$releases" -- "$cur") )
-}
-
-__convox_builds() {
-    read -d " " rack_flag rack app_flag app <<< $(__convox_rack_and_app_flags)
-    builds="$(__convox_q $rack_flag $rack $app_flag $app builds | grep -v STATUS | awk '{ print $1 }')"
-    echo "$builds"
 }
 
 __convox_complete_instance_types() {
@@ -340,7 +323,7 @@ __convox_complete_resource_types() {
 
 __convox_complete_resources() {
     local IFS=$'\n'
-    local resources=( $(__convox_resources $1) )
+    local resources=( $(__convox_resources) )
     unset IFS
     COMPREPLY=( $(compgen -W "${resources[*]}" -- "$cur") )
 }
@@ -411,16 +394,34 @@ _env_vars() {
     compgen -o bashdefault -P "$" -e -- "$cur"
 }
 
-__convox_stacks() {
-    __convox_q racks | grep -v ^RACK | awk '{ print $1 }' | tr '/' " " | awk '{ print $2 }'
+__convox_apps() {
+    read -d " " rack_flag rack <<< $(__convox_rack_flag)
+    __convox_q apps $rack_flag $rack
+}
+
+__convox_builds() {
+    read -d " " rack_flag rack app_flag app <<< $(__convox_rack_and_app_flags)
+    builds="$(__convox_q $rack_flag $rack $app_flag $app builds | grep -v STATUS | awk '{ print $1 }')"
+    echo "$builds"
 }
 
 __convox_resources() {
-    __convox_q resources | grep -v ^NAME | awk '{ print $1 }'
+    read -d " " rack_flag rack <<< $(__convox_rack_flag)
+    __convox_q "$rack_flag" "$rack" resources | grep -v ^NAME | awk '{ print $1 }'
 }
 
 __convox_racks() {
     __convox_q racks | grep -v ^RACK | awk '{ print $1 }'
+}
+
+__convox_releases() {
+    read -d " " rack_flag rack app_flag app <<< $(__convox_rack_and_app_flags)
+    builds="$(__convox_q $rack_flag $rack $app_flag $app releases | grep -v STATUS | awk '{ print $1 }')"
+    echo "$builds"
+}
+
+__convox_stacks() {
+    __convox_q racks | grep -v ^RACK | awk '{ print $1 }' | tr '/' " " | awk '{ print $2 }'
 }
 
 ##################
@@ -3282,31 +3283,3 @@ eval "$__convox_previous_extglob_setting"
 unset __convox_previous_extglob_setting
 
 complete -F _convox convox cx
-
-
-## UNUSED ##
-
-# If we are currently completing the value of a map option (key=value)
-# which matches the extglob given as an argument, returns key.
-# This function is needed for key-specific completions.
-__convox_map_key_of_current_option() {
-        local glob="$1"
-
-        local key glob_pos
-        if [ "$cur" = "=" ] ; then        # key= case
-            key="$prev"
-            glob_pos=$((cword - 2))
-        elif [[ $cur == *=* ]] ; then     # key=value case (OSX)
-            key=${cur%=*}
-            glob_pos=$((cword - 1))
-        elif [ "$prev" = "=" ] ; then
-            key=${words[$cword - 2]}  # key=value case
-            glob_pos=$((cword - 3))
-        else
-            return
-        fi
-
-        [ "${words[$glob_pos]}" = "=" ] && ((glob_pos--))  # --option=key=value syntax
-
-        [[ ${words[$glob_pos]} == @($glob) ]] && echo "$key"
-}
